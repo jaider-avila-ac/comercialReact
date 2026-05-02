@@ -18,7 +18,7 @@ const EstadoBadge = ({ estado }) => {
 
 export default function DashboardPage() {
  
-  const { dashboardData, loading, error, reload } = useDashboard();
+  const { dashboardData, loading } = useDashboard();
   const { resumen, ultimasFacturas, ultimosPagos } = dashboardData;
 
 
@@ -79,20 +79,7 @@ export default function DashboardPage() {
     monto: <span className="text-green-600 font-semibold">{formatMoney(p.monto || 0)}</span>,
   }));
 
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <div className="text-center text-red-500">
-          <i className="bi bi-exclamation-triangle text-4xl"></i>
-          <p className="text-lg font-semibold mt-2">Error al cargar el dashboard</p>
-          <p className="text-sm text-gray-500">{error}</p>
-          <button onClick={reload} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 mx-auto">
-            <i className="bi bi-arrow-repeat"></i> Reintentar
-          </button>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="p-3 lg:p-4" style={{ maxWidth: '1400px' }}>

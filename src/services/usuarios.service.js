@@ -137,14 +137,24 @@ export async function activosAhora(minutos = 30) {
 }
 /**
  * Crear empresa con administrador (solo SUPER_ADMIN)
- */
-export async function crearEmpresaConAdmin({ empresa, admin }) {
+ */export async function crearEmpresaConAdmin({ empresa, admin }) {
     await csrfCookie();
+
+    // Asegurar que el email de la empresa tenga valor (usar el del admin si no viene)
+    const empresaEmail = empresa.email || admin.email;
 
     const resEmp = await apiFetch("/empresas", {
         method: "POST",
-        body: JSON.stringify(empresa),
+        body: JSON.stringify({
+            nombre: empresa.nombre,
+            nit: empresa.nit || null,
+            email: empresaEmail,  // ✅ Enviar email de la empresa
+            telefono: empresa.telefono || null,
+            direccion: empresa.direccion || null,
+            ciudad: empresa.ciudad || null,
+        }),
     });
+    
     const dataEmp = await resEmp.json();
     if (!resEmp.ok) throw new Error(dataEmp?.message || "No se pudo crear la empresa.");
 
@@ -164,6 +174,7 @@ export async function crearEmpresaConAdmin({ empresa, admin }) {
             is_activo: true,
         }),
     });
+    
     const dataUser = await resUser.json();
     if (!resUser.ok) {
         throw new Error(

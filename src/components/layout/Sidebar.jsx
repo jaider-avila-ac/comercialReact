@@ -10,7 +10,8 @@ import {
   Building2, 
   Settings, 
   LogOut,
-  Truck
+  Truck,
+  BarChart3  // 👈 Agregar icono para Reportes
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -20,6 +21,7 @@ const NAV_ITEMS = [
   { to: "/cotizaciones", Icon: FileText, label: "Cotizaciones", section: "Ventas" },
   { to: "/facturas", Icon: Receipt, label: "Facturas", section: "Ventas" },
   { to: "/finanzas", Icon: Wallet, label: "Finanzas", section: "Ventas" },
+  { to: "/reportes", Icon: BarChart3, label: "Reportes", section: "Ventas" },  // 👈 Agregar Reportes
   { to: "/catalogo", Icon: Package, label: "Catálogo", section: "Inventario" },
   { to: "/empresa", Icon: Building2, label: "Empresa", section: "Inventario" },
   { to: "/ajustes/usuarios", Icon: Settings, label: "Ajustes", section: "Admin" },

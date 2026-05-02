@@ -21,7 +21,7 @@ import IngresosPage from "../pages/Finanzas/IngresosPage";
 import ReportesPage from "../pages/Reportes/ReportesPage";
 import UsuariosPage from "../pages/Ajustes/UsuariosPage";
 import EgresosPage from "../pages/Finanzas/EgresosPage";
-
+import EmpresaFormPage from "../pages/Empresa/EmpresaFormPage";
 import UsuarioFormPage from "../pages/Ajustes/UsuarioFormPage";
 import BrevoPage from "../pages/Ajustes/BrevoPage";
 
@@ -60,6 +60,7 @@ export default function AppRouter() {
                 <Route path="clientes/nuevo" element={<ClienteFormPage />} />
                 <Route path="clientes/editar/:id" element={<ClienteFormPage />} />
                 <Route path="finanzas/ingresos" element={<IngresosPage />} />
+<Route path="empresas/nueva" element={<EmpresaFormPage />} />
 
                 {/* Cotizaciones */}
                 <Route path="cotizaciones" element={<CotizacionesPage />} />

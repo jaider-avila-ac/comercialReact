@@ -166,6 +166,15 @@ export default function UsuariosPage() {
             variant="outline"
             onClick={() => navigate("/ajustes/brevo")}
           />
+
+          {isSA && (
+  <Button
+    icon={Building2}
+    text="Nueva Empresa"
+    variant="primary"
+    onClick={() => navigate("/empresas/nueva")}
+  />
+)}
           {/* Botón Nuevo Usuario */}
           <Button
             icon={Plus}
