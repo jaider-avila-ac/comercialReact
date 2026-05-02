@@ -1,0 +1,275 @@
+// src/pages/Finanzas/IngresosPage.jsx
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowLeft, RefreshCw, Plus } from "lucide-react";
+import { Button } from "../../components/ui/Button";
+import DataTable from "../../components/ui/DataTable";
+import { Pagination } from "../../components/ui/DataTable/Pagination";
+import { useIngresos } from "./useIngresos";
+import IngresosModal from "./IngresosModal";
+import { showConfirm } from "../../utils/notifications";
+
+export default function IngresosPage() {
+  const {
+    ingresos,
+    loading,
+    totalFormatted,
+    pagination,
+    filtros,
+    actualizarFiltros,
+    limpiarFiltros,
+    recargar,
+    cambiarPagina,
+    anularIngreso,
+    formatDate,
+  } = useIngresos();
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [ingresoSeleccionado, setIngresoSeleccionado] = useState(null);
+
+  const handleNuevo = () => {
+    setIngresoSeleccionado(null);
+    setModalOpen(true);
+  };
+
+  const handleEditar = (row) => {
+    const ingreso = ingresos.find(i => i.id === row.id);
+    if (ingreso && ingreso.tipo === "INGRESO_MANUAL") {
+      setIngresoSeleccionado(ingreso);
+      setModalOpen(true);
+    }
+  };
+
+  const handleAnular = async (row) => {
+    const ingreso = ingresos.find(i => i.id === row.id);
+    if (!ingreso) return;
+
+    const confirmed = await showConfirm(
+      `¿Anular el ingreso "${ingreso.descripcion}"?`,
+      { title: "Anular ingreso", okLabel: "Sí, anular" }
+    );
+    
+    if (confirmed) {
+      await anularIngreso(ingreso.id, ingreso.descripcion);
+    }
+  };
+
+  const columns = [
+    { key: "recibo", label: "Recibo", sortable: true },
+    { key: "fecha_formatted", label: "Fecha", sortable: true },
+    { key: "tipo_label", label: "Tipo", sortable: true },
+    { key: "forma_pago", label: "Forma pago" },
+    { key: "referencia", label: "Referencia" },
+    { key: "monto_formatted", label: "Monto", align: "right", sortable: true },
+  ];
+
+  const actions = (row) => {
+    const ingreso = ingresos.find(i => i.id === row.id);
+    const esManual = ingreso?.tipo === "INGRESO_MANUAL";
+    const anulado = ingreso?.estado === "ANULADO";
+
+    if (!esManual) {
+      return <span className="text-gray-400 text-sm">—</span>;
+    }
+
+    if (anulado) {
+      return <span className="text-gray-400 text-sm">Anulado</span>;
+    }
+
+    return (
+      <div className="flex gap-1">
+        <button
+          onClick={() => handleEditar(row)}
+          className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+          title="Editar"
+        >
+          <i className="bi bi-pencil"></i>
+        </button>
+        <button
+          onClick={() => handleAnular(row)}
+          className="p-1.5 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+          title="Anular"
+        >
+          <i className="bi bi-slash-circle"></i>
+        </button>
+      </div>
+    );
+  };
+
+  const rows = ingresos.map(i => ({
+    id: i.id,
+    recibo: <span className="font-semibold text-gray-800">{i.recibo}</span>,
+    fecha_formatted: <span className="text-gray-600 text-sm whitespace-nowrap">{i.fecha_formatted}</span>,
+    tipo_label: (
+      <div>
+        <div className="font-medium text-gray-800">{i.tipo_label}</div>
+        <div className="mt-1">
+          {i.estado === "ANULADO" ? (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 border border-red-200">
+              ANULADO
+            </span>
+          ) : (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
+              ACTIVO
+            </span>
+          )}
+        </div>
+        {i.cliente_nombre && (
+          <div className="text-xs text-gray-500 mt-1">{i.cliente_nombre}</div>
+        )}
+      </div>
+    ),
+    forma_pago: <span className="text-gray-600 text-sm">{i.forma_pago}</span>,
+    referencia: i.referencia !== "—" ? (
+      <span className="text-gray-500 text-sm truncate max-w-[120px] block" title={i.referencia}>
+        {i.referencia}
+      </span>
+    ) : (
+      <span className="text-gray-400 text-sm">—</span>
+    ),
+    monto_formatted: i.estado === "ANULADO" ? (
+      <span className="text-gray-400 line-through">{i.monto_formatted}</span>
+    ) : (
+      <span className="text-green-600 font-semibold">{i.monto_formatted}</span>
+    ),
+  }));
+
+  const footerTotales = (
+    <div className="border-t border-gray-200 bg-gray-50 px-4 py-2">
+      <div className="flex justify-between items-center">
+        <div className="text-sm text-gray-500">
+          Mostrando {ingresos.length} de {pagination.total} registros
+        </div>
+        <div className="flex gap-2 items-center">
+          <span className="text-gray-500">Total ingresos →</span>
+          <span className="text-green-600 font-semibold min-w-[130px] text-right">
+            {totalFormatted}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="p-4">
+      <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+            <i className="bi bi-trending-up text-green-500"></i>
+            Ingresos
+          </h1>
+          <p className="text-sm text-gray-500">Pagos, ventas mostrador e ingresos manuales</p>
+        </div>
+        <div className="flex gap-2">
+          <Link to="/finanzas">
+            <Button text="Volver a finanzas" icon={ArrowLeft} variant="outline" />
+          </Link>
+          <Button text="Nuevo ingreso" icon={Plus} variant="primary" onClick={handleNuevo} />
+          <Button text="Refrescar" icon={RefreshCw} variant="outline" onClick={recargar} disabled={loading} />
+        </div>
+      </div>
+
+      {/* Filtros */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+          <div className="relative">
+            <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <input
+              type="text"
+              value={filtros.search}
+              onChange={(e) => actualizarFiltros({ search: e.target.value })}
+              placeholder="Buscar..."
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          
+          <select
+            value={filtros.tipo}
+            onChange={(e) => actualizarFiltros({ tipo: e.target.value })}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Todos los tipos</option>
+            <option value="PAGO_FACTURA">Pagos factura</option>
+            <option value="VENTA_MOSTRADOR">Ventas mostrador</option>
+            <option value="INGRESO_MANUAL">Ingresos manuales</option>
+          </select>
+          
+          <input
+            type="date"
+            value={filtros.desde}
+            onChange={(e) => actualizarFiltros({ desde: e.target.value })}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Desde"
+          />
+          
+          <input
+            type="date"
+            value={filtros.hasta}
+            onChange={(e) => actualizarFiltros({ hasta: e.target.value })}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Hasta"
+          />
+          
+          <div className="flex gap-2">
+            <button
+              onClick={recargar}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+            >
+              <i className="bi bi-search"></i>
+              Filtrar
+            </button>
+            {(filtros.search || filtros.tipo || filtros.desde || filtros.hasta) && (
+              <button
+                onClick={limpiarFiltros}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm"
+              >
+                <i className="bi bi-x-circle"></i>
+                Limpiar
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Tabla */}
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <DataTable
+          columns={columns}
+          rows={rows}
+          actions={actions}
+          loading={loading}
+          empty={
+            <div className="text-center py-8">
+              <i className="bi bi-inbox text-gray-400 text-3xl block mb-2"></i>
+              <p className="text-gray-500">Sin ingresos registrados</p>
+              <Button text="Registrar ingreso" icon={Plus} variant="primary" className="mt-4" onClick={handleNuevo} />
+            </div>
+          }
+        />
+
+        {ingresos.length > 0 && footerTotales}
+
+        {!loading && pagination.last_page > 1 && (
+          <Pagination
+            currentPage={pagination.current_page}
+            totalPages={pagination.last_page}
+            onPageChange={cambiarPagina}
+            totalItems={pagination.total}
+            pageSize={pagination.per_page}
+          />
+        )}
+      </div>
+
+      {/* Modal */}
+      <IngresosModal
+        isOpen={modalOpen}
+        onClose={() => {
+          setModalOpen(false);
+          setIngresoSeleccionado(null);
+        }}
+        ingreso={ingresoSeleccionado}
+        onSuccess={recargar}
+      />
+    </div>
+  );
+}
