@@ -15,7 +15,9 @@ export default function EmpresaFormPage() {
     const [empresaForm, setEmpresaForm] = useState({
         nombre: "",
         nit: "",
+        matricula: "",
         email: "",
+        pagina_web: "",
         telefono: "",
         ciudad: "",
         direccion: "",
@@ -71,7 +73,9 @@ export default function EmpresaFormPage() {
             empresa: {
                 nombre: empresaForm.nombre,
                 nit: empresaForm.nit || null,
-                email: empresaForm.email || null,  // 👈 ESTA LÍNEA FALTABA
+                matricula: empresaForm.matricula || null,
+                email: empresaForm.email || null,
+                pagina_web: empresaForm.pagina_web || null,
                 telefono: empresaForm.telefono || null,
                 ciudad: empresaForm.ciudad || null,
                 direccion: empresaForm.direccion || null,
@@ -142,6 +146,14 @@ export default function EmpresaFormPage() {
                                 placeholder="900.123.456-7"
                             />
                             <Input
+                                id="matricula"
+                                name="matricula"
+                                label="Matrícula mercantil"
+                                value={empresaForm.matricula}
+                                onChange={handleEmpresaChange}
+                                placeholder="Ej: 12345-6"
+                            />
+                            <Input
                                 id="email"
                                 name="email"
                                 label="Correo electrónico"
@@ -149,6 +161,14 @@ export default function EmpresaFormPage() {
                                 value={empresaForm.email}
                                 onChange={handleEmpresaChange}
                                 placeholder="contacto@empresa.com"
+                            />
+                            <Input
+                                id="pagina_web"
+                                name="pagina_web"
+                                label="Página web"
+                                value={empresaForm.pagina_web}
+                                onChange={handleEmpresaChange}
+                                placeholder="www.empresa.com"
                             />
                             <Input
                                 id="telefono"

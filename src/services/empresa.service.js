@@ -117,6 +117,21 @@ export async function obtenerLogoUrl() {
 }
 
 /**
+ * Guardar tema de presentación de documentos
+ * PUT /api/empresa/tema
+ */
+export async function guardarTema(docTema, docColor) {
+  await csrfCookie();
+  const res = await apiFetch("/empresa/tema", {
+    method: "PUT",
+    body: JSON.stringify({ doc_tema: docTema, doc_color: docColor }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.message || "Error al guardar el tema");
+  return data.empresa ?? data;
+}
+
+/**
  * Revocar URL de blob (para liberar memoria)
  */
 export function revocarLogoUrl(url) {

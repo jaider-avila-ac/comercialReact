@@ -14,7 +14,7 @@ const formatMoney = (value) =>
 const CONFIG = {
   cotizacion: {
     tituloNuevo: "Nueva Cotización",
-    tituloEdicion: (id) => `Cotización #${id}`,
+    tituloEdicion: (num) => `Cotización #${num}`,
     rutaLista: "/cotizaciones",
     hasFechaVencimiento: true,
     labelEmitir: "Emitir cotización",
@@ -22,7 +22,7 @@ const CONFIG = {
   },
   factura: {
     tituloNuevo: "Nueva Factura",
-    tituloEdicion: (id) => `Factura #${id}`,
+    tituloEdicion: (num) => `Factura #${num}`,
     rutaLista: "/facturas",
     hasFechaVencimiento: false,
     labelEmitir: "Emitir factura",
@@ -33,6 +33,7 @@ const CONFIG = {
 export default function DocumentoFormPage({
   modo,
   documentoId,
+  numero,
   loading,
   saving,
   submitted = false,
@@ -90,7 +91,7 @@ export default function DocumentoFormPage({
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">
-            {isEditing ? cfg.tituloEdicion(documentoId) : cfg.tituloNuevo}
+            {isEditing ? cfg.tituloEdicion(numero ?? documentoId) : cfg.tituloNuevo}
           </h1>
           {estado && (
             <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded">

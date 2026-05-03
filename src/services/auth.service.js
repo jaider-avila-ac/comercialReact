@@ -2,64 +2,27 @@ import { apiFetch, csrfCookie } from "./api";
 import { USER_KEY, TOKEN_KEY } from "../config/config";
 
 export async function validarCorreo(email) {
-  try {
-    console.log("📧 Validando correo:", email);
-    await csrfCookie();
-    
-    const res = await apiFetch("/auth/iniciar", {
-      method: "POST",
-      body: JSON.stringify({ email }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.message || "El correo no está registrado.");
-    }
-
-    return { token: data.pre_token };
-  } catch (error) {
-    console.error("Error validar correo:", error);
-    throw error;
-  }
+  await csrfCookie();
+  const res = await apiFetch("/auth/iniciar", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "El correo no está registrado.");
+  return { sessionToken: data.session_token };
 }
 
-export async function validarPassword(preToken, password, email) {
-  try {
-    console.log("🔐 Validando password para:", email);
-    await csrfCookie();
-
-    const res = await apiFetch("/auth/verificar", {
-      method: "POST",
-      body: JSON.stringify({
-        email: email,        // ⚠️ IMPORTANTE: email debe ir aquí
-        token: preToken,
-        password: password,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.message || "Contraseña incorrecta.");
-    }
-
-    // Obtener datos del usuario y token
-    const userData = data.usuario || data.user;
-    const accessToken = data.access_token;
-    
-    if (!userData) {
-      throw new Error("Error al obtener datos del usuario.");
-    }
-
-    return {
-      token: accessToken,
-      usuario: userData
-    };
-  } catch (error) {
-    console.error("Error validar password:", error);
-    throw error;
-  }
+export async function validarPassword(sessionToken, password) {
+  await csrfCookie();
+  const res = await apiFetch("/auth/verificar", {
+    method: "POST",
+    body: JSON.stringify({ session_token: sessionToken, password }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Contraseña incorrecta.");
+  const userData = data.usuario || data.user;
+  if (!userData) throw new Error("Error al obtener datos del usuario.");
+  return { token: data.access_token, usuario: userData };
 }
 
 export async function obtenerPerfil() {

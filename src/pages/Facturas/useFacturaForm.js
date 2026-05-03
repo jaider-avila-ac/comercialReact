@@ -44,6 +44,7 @@ export function useFacturaForm() {
     lineas: [makeLinea()],
   }));
   const [facturaId, setFacturaId] = useState(null);
+  const [numero, setNumero] = useState(null);
   const [estado, setEstado] = useState(null);
 
   const totales = useMemo(() =>
@@ -66,16 +67,17 @@ export function useFacturaForm() {
     try {
       const data = await obtenerFactura(id);
       setFacturaId(data.id);
+      setNumero(data.numero);
       setEstado(data.estado);
 
       const lineasData = (data.lineas || []).map(l => ({
         id: l.id || crypto.randomUUID(),
         item_id: l.item_id,
         descripcion: l.descripcion_manual || l.item?.nombre || "",
-        cantidad: l.cantidad,
-        valor_unitario: l.valor_unitario,
-        descuento: l.descuento || 0,
-        iva_pct: l.iva_pct || 19,
+        cantidad: parseFloat(l.cantidad) || 1,
+        valor_unitario: parseFloat(l.valor_unitario) || 0,
+        descuento: parseFloat(l.descuento) || 0,
+        iva_pct: parseFloat(l.iva_pct) || 19,
       }));
 
       const ivasPct = [...new Set(lineasData.map(l => String(l.iva_pct)))];
@@ -105,10 +107,10 @@ export function useFacturaForm() {
         id: crypto.randomUUID(),
         item_id: l.item_id,
         descripcion: l.descripcion_manual || l.item?.nombre || "",
-        cantidad: l.cantidad,
-        valor_unitario: l.valor_unitario,
-        descuento: l.descuento || 0,
-        iva_pct: l.iva_pct || 19,
+        cantidad: parseFloat(l.cantidad) || 1,
+        valor_unitario: parseFloat(l.valor_unitario) || 0,
+        descuento: parseFloat(l.descuento) || 0,
+        iva_pct: parseFloat(l.iva_pct) || 19,
       }));
       const ivasPct = [...new Set(lineasData.map(l => String(l.iva_pct)))];
       const modoIva = ivasPct.length === 1 && ivasPct[0] !== "0" ? "global" : "linea";
@@ -243,7 +245,7 @@ export function useFacturaForm() {
 
   return {
     loading, saving, submitted, formData, totales,
-    facturaId, estado, isEditing, isEditable,
+    facturaId, numero, estado, isEditing, isEditable,
     guardar, emitir, anular,
     updateCliente, updateField, addLinea, updateLinea, removeLinea,
   };

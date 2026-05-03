@@ -38,6 +38,8 @@ export default function FacturasPage() {
     id: f.id,
     numero: f.estado === "BORRADOR" ? (
       <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Borrador</span>
+    ) : f.estado === "ANULADA" && !f.numero ? (
+      <span className="text-xs font-medium text-red-400 uppercase tracking-wide">Anulada</span>
     ) : (
       <span className="font-mono font-medium text-blue-600">{f.numero || `#${f.id}`}</span>
     ),

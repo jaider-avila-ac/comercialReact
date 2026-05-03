@@ -59,6 +59,8 @@ export default function CotizacionesPage() {
     id: c.id,
     numero: c.estado === "BORRADOR" ? (
       <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Borrador</span>
+    ) : c.estado === "ANULADA" && !c.numero ? (
+      <span className="text-xs font-medium text-red-400 uppercase tracking-wide">Anulada</span>
     ) : (
       <span className="font-mono font-medium text-blue-600">
         {c.numero || `#${c.id}`}
