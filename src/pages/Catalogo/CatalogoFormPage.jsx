@@ -270,6 +270,21 @@ export default function CatalogoFormPage() {
 
     if (!validarEnteros()) return;
 
+    // Bloquear contado si el costo supera el saldo disponible en caja
+    if (mostrarSeccionPago && formData.condicion_pago === "CONTADO") {
+      if (cajaDisponible === null) {
+        showToast("No se pudo verificar el saldo en caja. Recarga la página e intenta de nuevo.", "error");
+        return;
+      }
+      if (costoEstimado > cajaDisponible) {
+        showToast(
+          `Saldo insuficiente en caja. Disponible: ${formatMoney(cajaDisponible)} · Costo estimado: ${formatMoney(costoEstimado)}. Usa crédito o registro libre.`,
+          "error"
+        );
+        return;
+      }
+    }
+
     setSaving(true);
     try {
       if (isEditing) {
@@ -629,6 +644,17 @@ export default function CatalogoFormPage() {
                   </div>
                 )}
               </div>
+
+              {/* Aviso saldo insuficiente */}
+              {formData.condicion_pago === "CONTADO" && cajaDisponible !== null && costoEstimado > cajaDisponible && (
+                <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2 text-sm text-red-800">
+                  <Info size={16} className="shrink-0 mt-0.5" />
+                  <p>
+                    <strong>Saldo insuficiente:</strong> la caja tiene {formatMoney(cajaDisponible)} y el costo estimado es {formatMoney(costoEstimado)}.
+                    Cambia a <strong>Crédito</strong> o <strong>Registro libre</strong>.
+                  </p>
+                </div>
+              )}
 
               {/* Avisos */}
               {isCredito && (

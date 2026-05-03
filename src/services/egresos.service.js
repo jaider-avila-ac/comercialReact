@@ -1,5 +1,6 @@
 // src/services/egresos.service.js
 import { apiFetch, csrfCookie } from "./api";
+import { API_BASE_URL, TOKEN_KEY } from "../config/config";
 
 /**
  * GET /egresos/unificados
@@ -32,7 +33,7 @@ export async function listarEgresos(params = {}) {
 export async function crearEgreso(descripcion, monto, notas = null, archivo = null) {
   await csrfCookie();
   
-  const token = localStorage.getItem("access_token");
+  const token = localStorage.getItem(TOKEN_KEY);
   const xsrf = getCookie("XSRF-TOKEN");
   
   if (archivo) {
@@ -49,7 +50,7 @@ export async function crearEgreso(descripcion, monto, notas = null, archivo = nu
       ...(xsrf ? { "X-XSRF-TOKEN": xsrf } : {}),
     };
     
-    const res = await fetch("/api/egresos/manuales", {
+    const res = await fetch(`${API_BASE_URL}/api/egresos/manuales`, {
       method: "POST",
       body: formData,
       credentials: "include",
@@ -82,7 +83,7 @@ export async function crearEgreso(descripcion, monto, notas = null, archivo = nu
 export async function actualizarEgreso(id, descripcion, monto, notas = null, archivo = null) {
   await csrfCookie();
   
-  const token = localStorage.getItem("access_token");
+  const token = localStorage.getItem(TOKEN_KEY);
   const xsrf = getCookie("XSRF-TOKEN");
   
   if (archivo) {
@@ -100,7 +101,7 @@ export async function actualizarEgreso(id, descripcion, monto, notas = null, arc
       ...(xsrf ? { "X-XSRF-TOKEN": xsrf } : {}),
     };
     
-    const res = await fetch(`/api/egresos/manuales/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/api/egresos/manuales/${id}`, {
       method: "POST",
       body: formData,
       credentials: "include",

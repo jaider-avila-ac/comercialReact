@@ -39,7 +39,6 @@ export default function CotizacionViewPage() {
       ]);
       setData(cot);
       setEmpresa(emp);
-      document.title = `Cotización ${cot.numero || id}`;
       if (emp?.logo_path) {
         try {
           const url = await obtenerLogoUrl();
@@ -112,7 +111,9 @@ export default function CotizacionViewPage() {
           </div>
           <div className="text-right">
             <h2 className="text-gray-400 font-bold tracking-widest uppercase">Cotización</h2>
-            <p className="text-4xl font-black text-blue-600">{data.numero || `#${id}`}</p>
+            {data.numero && (
+              <p className="text-4xl font-black text-blue-600">{data.numero}</p>
+            )}
             <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold uppercase ${ESTADO_STYLE[data.estado]}`}>
               {data.estado}
             </span>

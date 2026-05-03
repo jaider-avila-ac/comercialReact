@@ -5,25 +5,79 @@ import { Bell, Menu } from "lucide-react";
 
 const ROUTE_TITLES = {
   "/dashboard": "Dashboard",
+  // Clientes
   "/clientes": "Clientes",
-  "/proveedores": "Proveedores",
+  "/clientes/nuevo": "Clientes / Nuevo",
+  "/clientes/editar": "Clientes / Editar",
+  "/clientes/facturas": "Clientes / Facturas",
+  // Cotizaciones
   "/cotizaciones": "Cotizaciones",
+  "/cotizaciones/nueva": "Cotizaciones / Nueva",
+  "/cotizaciones/editar": "Cotizaciones / Editar",
+  "/cotizaciones/ver": "Cotizaciones / Ver",
+  // Facturas
   "/facturas": "Facturas",
-  "/finanzas": "Finanzas",
-  "/reportes": "Reportes",
+  "/facturas/nueva": "Facturas / Nueva",
+  "/facturas/editar": "Facturas / Editar",
+  "/facturas/ver": "Facturas / Ver",
+  // Proveedores
+  "/proveedores": "Proveedores",
+  "/proveedores/nuevo": "Proveedores / Nuevo",
+  "/proveedores/editar": "Proveedores / Editar",
+  // Catálogo
   "/catalogo": "Catálogo",
+  "/catalogo/nuevo": "Catálogo / Nuevo",
+  "/catalogo/editar": "Catálogo / Editar",
+  // Finanzas
+  "/finanzas": "Finanzas",
+  "/finanzas/ingresos": "Finanzas / Ingresos",
+  "/finanzas/egresos": "Finanzas / Egresos",
+  "/finanzas/pendientes": "Finanzas / Pendientes",
+  "/finanzas/cobro-rapido": "Finanzas / Cobro Rápido",
+  // Compras e Inventario
+  "/compras": "Compras",
+  "/inventario/movimientos": "Inventario / Movimientos",
+  // Venta rápida
+  "/venta-rapida": "Venta Rápida",
+  // Reportes
+  "/reportes": "Reportes",
+  // Empresa
   "/empresa": "Empresa",
+  "/empresas/nueva": "Empresas / Nueva",
+  // Ajustes
   "/ajustes/usuarios": "Ajustes / Usuarios",
+  "/ajustes/usuario-form": "Ajustes / Nuevo Usuario",
+  "/ajustes/usuario-form/:id": "Ajustes / Editar Usuario",
   "/ajustes/empresas": "Ajustes / Empresas",
   "/ajustes/brevo": "Ajustes / Brevo",
+  "/ajustes/auditoria": "Ajustes / Auditoría",
 };
 
 function getTitle(pathname) {
-  // Si es una ruta de ajustes, devolver el título específico
-  if (pathname.startsWith("/ajustes")) {
-    return ROUTE_TITLES[pathname] || "Ajustes";
+  if (ROUTE_TITLES[pathname]) return ROUTE_TITLES[pathname];
+
+  const lastSegment = pathname.substring(pathname.lastIndexOf("/") + 1);
+  const isId = /^\d+$/.test(lastSegment);
+  const parent = pathname.substring(0, pathname.lastIndexOf("/"));
+
+  if (isId) {
+    // Check for explicit /:id variant first
+    const withIdKey = `${parent}/:id`;
+    if (ROUTE_TITLES[withIdKey]) return ROUTE_TITLES[withIdKey];
+    // Fall back to parent key
+    if (parent && ROUTE_TITLES[parent]) return ROUTE_TITLES[parent];
+  } else if (parent && ROUTE_TITLES[parent]) {
+    return ROUTE_TITLES[parent];
   }
-  return ROUTE_TITLES[pathname] || "SYS Comercial";
+
+  // Fallback: match by two-segment prefix
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments.length >= 2) {
+    const twoSegment = `/${segments[0]}/${segments[1]}`;
+    if (ROUTE_TITLES[twoSegment]) return ROUTE_TITLES[twoSegment];
+  }
+
+  return "SYS Comercial";
 }
 
 const rolColors = {

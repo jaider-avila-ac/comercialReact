@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { getReporteKPIs, getRendimientoItems } from "../../services/reportes.service";
 import { showToast } from "../../utils/notifications";
 
@@ -22,22 +22,25 @@ export function useReportes() {
   const [kpis, setKpis] = useState(KPIS_VACIO);
   const [items, setItems] = useState([]);
   const [filtros, setFiltros] = useState(getDefaultFiltros);
+  const mountedRef = useRef(true);
 
-  const loadRef = useRef(null);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
-  const loadReporte = useCallback(() => {
-    if (!filtros.desde || !filtros.hasta) {
+  const loadReporte = useCallback((desde, hasta) => {
+    if (!desde || !hasta) {
       showToast("Seleccione fecha desde y hasta", "warning");
       return;
     }
-
     setLoading(true);
-
     Promise.all([
-      getReporteKPIs({ desde: filtros.desde, hasta: filtros.hasta }),
-      getRendimientoItems({ desde: filtros.desde, hasta: filtros.hasta }),
+      getReporteKPIs({ desde, hasta }),
+      getRendimientoItems({ desde, hasta }),
     ])
       .then(([kpisData, rendData]) => {
+        if (!mountedRef.current) return;
         setKpis({
           total_facturado:    kpisData.total_facturado    || 0,
           total_cobrado:      kpisData.total_cobrado      || 0,
@@ -55,23 +58,20 @@ export function useReportes() {
         });
         setItems(rendData.rendimiento_items || []);
       })
-      .catch(error => {
-        showToast(error.message || "Error al cargar el reporte", "error");
+      .catch(err => {
+        if (!mountedRef.current) return;
+        showToast(err.message || "Error al cargar el reporte", "error");
       })
       .finally(() => {
-        setLoading(false);
+        if (mountedRef.current) setLoading(false);
       });
-  }, [filtros]);
+  }, []);
 
+  // Carga inicial con las fechas por defecto
   useEffect(() => {
-    loadRef.current = loadReporte;
-  }, [loadReporte]);
-
-  useEffect(() => {
-    Promise.resolve().then(() => {
-      setLoading(true);
-      loadRef.current?.();
-    });
+    const { desde, hasta } = getDefaultFiltros();
+    loadReporte(desde, hasta);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const actualizarFiltros = useCallback((nuevos) => {
@@ -79,8 +79,8 @@ export function useReportes() {
   }, []);
 
   const generarReporte = useCallback(() => {
-    loadReporte();
-  }, [loadReporte]);
+    loadReporte(filtros.desde, filtros.hasta);
+  }, [loadReporte, filtros]);
 
   return {
     loading,

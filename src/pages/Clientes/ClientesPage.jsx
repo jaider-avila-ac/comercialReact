@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Plus, CreditCard, Pencil, Trash2, Search } from "lucide-react";
+import { Plus,  Pencil, Trash2, Search, Receipt } from "lucide-react";
 import { IconButton } from "../../components/ui/IconButton";
 import DataTable from "../../components/ui/DataTable";
 import { Pagination } from "../../components/ui/DataTable/Pagination";
@@ -53,8 +53,8 @@ export default function ClientesPage() {
     id: c.id,
     nombre_completo: (
       <div>
-        <div className="font-semibold text-gray-800">{c.nombre_razon_social}</div>
-        {c.empresa && <div className="text-xs text-gray-400">{c.empresa}</div>}
+        <div className="font-semibold text-gray-800">{c.empresa || c.nombre_razon_social}</div>
+        {c.empresa && <div className="text-xs text-gray-400">{c.nombre_razon_social}</div>}
       </div>
     ),
     documento: c.tipo_documento && c.num_documento 
@@ -67,21 +67,21 @@ export default function ClientesPage() {
   }));
 
   const renderAcciones = (row) => (
-    <div className="flex items-center gap-1">
-      <Link to={`/clientes/facturas/${row.id}`}>
-        <IconButton icon={CreditCard} title="Ver facturas" variant="info" />
-      </Link>
-      <Link to={`/clientes/editar/${row.id}`}>
-        <IconButton icon={Pencil} title="Editar" variant="warning" />
-      </Link>
-      <IconButton 
-        icon={Trash2} 
-        title="Eliminar" 
-        variant="danger"
-        onClick={() => onDelete({ id: row.id, nombre_razon_social: row.nombre_razon_social })} 
-      />
-    </div>
-  );
+  <div className="flex items-center gap-1">
+    <Link to={`/clientes/facturas/${row.id}`}>
+      <IconButton icon={Receipt} title="Ver facturas" variant="info" />
+    </Link>
+    <Link to={`/clientes/editar/${row.id}`}>
+      <IconButton icon={Pencil} title="Editar" variant="warning" />
+    </Link>
+    <IconButton 
+      icon={Trash2} 
+      title="Eliminar" 
+      variant="danger"
+      onClick={() => onDelete({ id: row.id, nombre_razon_social: row.nombre_razon_social })} 
+    />
+  </div>
+);
 
   if (error) {
     return (

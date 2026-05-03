@@ -24,6 +24,7 @@ import EgresosPage from "../pages/Finanzas/EgresosPage";
 import EmpresaFormPage from "../pages/Empresa/EmpresaFormPage";
 import UsuarioFormPage from "../pages/Ajustes/UsuarioFormPage";
 import BrevoPage from "../pages/Ajustes/BrevoPage";
+import ClienteFacturasPage from "../pages/Clientes/ClienteFacturasPage";
 
 import AuditoriaPage from "../pages/Ajustes/AuditoriaPage";
 
@@ -70,7 +71,7 @@ export default function AppRouter() {
                 <Route path="ajustes/brevo" element={<BrevoPage />} />
 
                 <Route path="reportes" element={<ReportesPage />} />
-
+<Route path="clientes/facturas/:id" element={<ClienteFacturasPage />} />
                 <Route path="empresa" element={<EmpresaPage />} />
                 <Route path="ajustes/usuarios" element={<UsuariosPage />} />
                 {/* Facturas */}

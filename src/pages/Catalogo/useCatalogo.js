@@ -87,10 +87,10 @@ export function useCatalogo() {
   }, [pagination.lastPage, loadItems]);
 
   const handleDelete = useCallback(async (id, nombre) => {
-    const confirmed = await showConfirm(`¿Eliminar el item <strong>${nombre}</strong>?`, {
-      title: "Eliminar item",
-      okLabel: "Sí, eliminar",
-    });
+    const confirmed = await showConfirm(
+      `¿Eliminar <strong>${nombre}</strong>?<br><span style="font-size:0.85em;color:#6b7280">Si tiene compras asociadas, se anularán automáticamente y se revertirán los egresos y el inventario. Si fue usado en facturas activas, la operación será rechazada.</span>`,
+      { title: "Eliminar ítem", okLabel: "Sí, eliminar" }
+    );
     if (!confirmed || !isMountedRef.current) return;
     try {
       await eliminarItem(id);

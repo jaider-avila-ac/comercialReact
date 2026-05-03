@@ -93,8 +93,8 @@ export function useCotizaciones() {
     }
   }, [pagination.lastPage, loadCotizaciones]);
 
-  const handleDelete = useCallback(async (id, numero) => {
-    const confirmed = await showConfirm(`¿Eliminar la cotización ${numero}?`, {
+  const handleDelete = useCallback(async (id) => {
+    const confirmed = await showConfirm("¿Eliminar esta cotización? Esta acción no se puede deshacer.", {
       title: "Eliminar cotización",
       okLabel: "Sí, eliminar",
     });
@@ -108,8 +108,8 @@ export function useCotizaciones() {
     }
   }, [loadCotizaciones, pagination.currentPage]);
 
-  const handleEmitir = useCallback(async (id, numero) => {
-    const confirmed = await showConfirm(`¿Emitir la cotización ${numero}?`, {
+  const handleEmitir = useCallback(async (id) => {
+    const confirmed = await showConfirm("¿Emitir esta cotización? Se le asignará un número y no podrá editarse.", {
       title: "Emitir cotización",
       okLabel: "Sí, emitir",
     });
@@ -123,8 +123,8 @@ export function useCotizaciones() {
     }
   }, [loadCotizaciones, pagination.currentPage]);
 
-  const handleAnular = useCallback(async (id, numero) => {
-    const confirmed = await showConfirm(`¿Anular la cotización ${numero}?`, {
+  const handleAnular = useCallback(async (id) => {
+    const confirmed = await showConfirm("¿Anular esta cotización? Esta acción no se puede deshacer.", {
       title: "Anular cotización",
       okLabel: "Sí, anular",
     });

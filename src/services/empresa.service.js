@@ -1,5 +1,6 @@
 // src/services/empresa.service.js
 import { apiFetch, csrfCookie } from "./api";
+import { API_BASE_URL } from "../config/config";
 
 // Helper para obtener cookie XSRF (misma lógica que apiFetch)
 function getCookie(name) {
@@ -49,18 +50,28 @@ export async function subirLogo(id, file) {
   const xsrf = getCookie("XSRF-TOKEN");
   if (xsrf) headers["X-XSRF-TOKEN"] = xsrf;
 
-  // Usar getToken() para obtener el token (misma lógica que apiFetch)
   const token = localStorage.getItem("access_token");
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(`/api/empresas/${id}/logo`, {
+  const url = `${API_BASE_URL}/api/empresas/${id}/logo`;
+
+  const res = await fetch(url, {
     method: "POST",
     body: formData,
     headers,
     credentials: "include",
   });
 
-  const data = await res.json();
+  // Mejor manejo de errores
+  const textResponse = await res.text();
+  let data;
+  try {
+    data = JSON.parse(textResponse);
+  } catch {
+    console.error("Respuesta no JSON:", textResponse.substring(0, 200));
+    throw new Error(`Error del servidor: ${res.status}`);
+  }
+
   if (!res.ok) throw new Error(data?.message || "Error al subir el logo");
   return data.empresa ?? data;
 }
@@ -80,17 +91,16 @@ export async function eliminarLogo(id) {
 /**
  * Obtener la URL del logo con autenticación (para usar en <img>)
  * Esta función obtiene el blob de la imagen y crea una URL local
- *//**
- * Obtener la URL del logo con autenticación (para usar en <img>)
- * Esta función obtiene el blob de la imagen y crea una URL local
  */
 export async function obtenerLogoUrl() {
   const token = localStorage.getItem("access_token");
   
-  // 👈 Agregar timestamp para evitar caché
+  // Agregar timestamp para evitar caché
   const timestamp = Date.now();
   
-  const res = await fetch(`/api/empresa/logo?t=${timestamp}`, {
+  const url = `${API_BASE_URL}/api/empresa/logo?t=${timestamp}`;
+  
+  const res = await fetch(url, {
     headers: {
       "Authorization": `Bearer ${token}`,
       "Accept": "image/*",
@@ -105,6 +115,7 @@ export async function obtenerLogoUrl() {
   const blob = await res.blob();
   return URL.createObjectURL(blob);
 }
+
 /**
  * Revocar URL de blob (para liberar memoria)
  */

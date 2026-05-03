@@ -28,7 +28,6 @@ export async function registrarVentaRapida(payload) {
   await csrfCookie();
   
   const data = {
-    fecha: new Date().toISOString().split('T')[0],
     descripcion: `Venta rápida: ${payload.item_id}`,
     item_id: payload.item_id,
     cantidad: payload.cantidad,
@@ -50,6 +49,15 @@ export async function registrarVentaRapida(payload) {
   }
   
   return res.json();
+}
+
+// ── Anular venta rápida
+export async function anularVentaRapida(id) {
+  await csrfCookie();
+  const res = await apiFetch(`/ingresos/mostrador/${id}/anular`, { method: "POST" });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.message || "Error al anular venta");
+  return data;
 }
 
 // ── Historial de ventas rápidas (usa ingreso mostrador)
@@ -74,6 +82,7 @@ export async function getVentasRapidas({ desde, hasta } = {}) {
     numero_recibo: item.numero,
     total_pagado: item.monto,
     forma_pago: item.forma_pago,
+    estado: item.estado,
     notas: item.descripcion || item.notas,
     item_nombre: item.item?.nombre || "Producto",
     cantidad: item.cantidad,

@@ -1,7 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Zap } from "lucide-react";
+import { ArrowLeft, Zap, Ban } from "lucide-react";
 import { Button } from "../../components/ui/Button";
+import { IconButton } from "../../components/ui/IconButton";
 import DataTable from "../../components/ui/DataTable";
 import { useVentaRapida } from "./useVentaRapida";
 import { buscarItems } from "../../services/ventaRapida.service";
@@ -28,6 +29,7 @@ const HISTORIAL_COLUMNS = [
   { key: "valor_unitario", label: "V. Unit.", align: "right" },
   { key: "forma_pago_badge", label: "Pago", align: "center" },
   { key: "total", label: "Total", align: "right" },
+  { key: "acciones", label: "", align: "center" },
 ];
 
 export default function VentaRapidaPage() {
@@ -53,6 +55,7 @@ export default function VentaRapidaPage() {
     total,
     canSubmit,
     handleRegistrar,
+    handleAnular,
   } = useVentaRapida();
 
   const itemInputRef = useRef(null);
@@ -148,6 +151,9 @@ export default function VentaRapidaPage() {
       <div>
         <div className="font-semibold text-sm">{h.item_nombre || "—"}</div>
         <div className="text-xs text-gray-400">{h.numero_recibo}</div>
+        {h.estado === "ANULADO" && (
+          <span className="text-xs text-red-500 font-medium">ANULADO</span>
+        )}
       </div>
     ),
     cantidad: h.cantidad,
@@ -157,7 +163,23 @@ export default function VentaRapidaPage() {
         {h.forma_pago || "—"}
       </span>
     ),
-    total: <span className="text-green-600 font-semibold">{formatMoney(h.total_pagado)}</span>,
+    total: (
+      <span className={h.estado === "ANULADO" ? "line-through text-gray-400" : "text-green-600 font-semibold"}>
+        {formatMoney(h.total_pagado)}
+      </span>
+    ),
+    acciones: h.estado !== "ANULADO" ? (
+      <IconButton
+        icon={Ban}
+        variant="danger"
+        title="Anular venta"
+        onClick={() => {
+          if (window.confirm(`¿Anular la venta ${h.numero_recibo}?`)) {
+            handleAnular(h.id);
+          }
+        }}
+      />
+    ) : null,
   }));
 
   return (

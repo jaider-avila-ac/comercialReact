@@ -1,4 +1,5 @@
 import { apiFetch, csrfCookie } from "./api";
+import { API_BASE_URL, TOKEN_KEY } from "../config/config";
 
 export async function listarItems({ page = 1, search = "", tipo = "", soloControla = "0", perPage = 10 } = {}) {
   const qs = new URLSearchParams();
@@ -32,15 +33,15 @@ export async function obtenerItem(id) {
 
 export async function crearItem(formData) {
   await csrfCookie();
-  
-  const token = localStorage.getItem("access_token");
-  
-  const res = await fetch("/api/items", {
+
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  const res = await fetch(`${API_BASE_URL}/api/items`, {
     method: "POST",
     body: formData,
     headers: {
       "Accept": "application/json",
-      "Authorization": token ? `Bearer ${token}` : "",
+      ...(token ? { "Authorization": `Bearer ${token}` } : {}),
     },
     credentials: "include",
   });

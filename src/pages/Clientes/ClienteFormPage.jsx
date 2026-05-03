@@ -8,11 +8,11 @@ import { obtenerCliente, crearCliente, actualizarCliente } from "../../services/
 import { showToast } from "../../utils/notifications";
 
 const tiposDocumento = [
-  { value: "CC", label: "CC" },
-  { value: "NIT", label: "NIT" },
-  { value: "CE", label: "CE" },
-  { value: "PAS", label: "PAS" },
-  { value: "OTRO", label: "OTRO" }
+  { value: "CC",   label: "CC — Cédula de Ciudadanía" },
+  { value: "NIT",  label: "NIT — Número de Identificación Tributaria" },
+  { value: "CE",   label: "CE — Cédula de Extranjería" },
+  { value: "PAS",  label: "PAS — Pasaporte" },
+  { value: "OTRO", label: "OTRO" },
 ];
 
 export default function ClienteFormPage() {
@@ -132,7 +132,14 @@ export default function ClienteFormPage() {
   <form onSubmit={handleSubmit} className="space-y-4">
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       
-      {/* Nombre y Empresa en la misma fila */}
+      {/* Empresa y Nombre en la misma fila */}
+      <Input
+        id="empresa"
+        label="Empresa"
+        value={formData.empresa}
+        onChange={handleChange}
+        placeholder="Nombre de la empresa (si aplica)"
+      />
       <Input
         id="nombre_razon_social"
         label="Nombre / Razón Social"
@@ -140,13 +147,6 @@ export default function ClienteFormPage() {
         onChange={handleChange}
         required
         placeholder="Ingrese el nombre o razón social"
-      />
-      <Input
-        id="empresa"
-        label="Empresa"
-        value={formData.empresa}
-        onChange={handleChange}
-        placeholder="Nombre de la empresa (si aplica)"
       />
 
       {/* Tipo Documento y Documento */}

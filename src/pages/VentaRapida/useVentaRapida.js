@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { registrarVentaRapida, getVentasRapidas } from "../../services/ventaRapida.service";
+import { registrarVentaRapida, getVentasRapidas, anularVentaRapida } from "../../services/ventaRapida.service";
 import { showToast } from "../../utils/notifications";
 
 const getTodayISO = () => {
@@ -69,6 +69,16 @@ export function useVentaRapida() {
     }
   };
 
+  const handleAnular = async (id) => {
+    try {
+      await anularVentaRapida(id);
+      showToast("Venta anulada correctamente", "success");
+      await loadHistorial();
+    } catch (err) {
+      showToast(err.message, "error");
+    }
+  };
+
   const canSubmit = itemSeleccionado &&
     (parseFloat(cantidad) || 0) > 0 &&
     (parseFloat(valorUnitario) || 0) >= 0 &&
@@ -133,5 +143,6 @@ export function useVentaRapida() {
     total,
     canSubmit,
     handleRegistrar,
+    handleAnular,
   };
 }

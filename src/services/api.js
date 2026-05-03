@@ -1,4 +1,4 @@
-import { TOKEN_KEY, USER_KEY } from "../config/config";
+import { API_BASE_URL, TOKEN_KEY, USER_KEY } from "../config/config";
 
 let unauthorizedHandler = null;
 
@@ -54,7 +54,7 @@ export async function apiFetch(path, options = {}) {
 
   const p = path.startsWith("/") ? path : `/${path}`;
   
-  const response = await fetch(`/api${p}`, {
+const response = await fetch(`${API_BASE_URL}/api${p}`, {
     ...options,
     headers,
     credentials: "include",

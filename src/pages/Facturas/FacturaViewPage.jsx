@@ -39,7 +39,6 @@ export default function FacturaViewPage() {
         if (cancelled) return;
         setData(fac);
         setEmpresa(emp);
-        document.title = `Factura ${fac.numero || id}`;
         if (emp?.logo_path) return obtenerLogoUrl();
       })
       .then(url => {
@@ -111,7 +110,9 @@ export default function FacturaViewPage() {
           </div>
           <div className="text-right">
             <h2 className="text-gray-400 font-bold tracking-widest uppercase">Factura</h2>
-            <p className="text-4xl font-black text-blue-600">{data.numero || `#${id}`}</p>
+            {data.numero && (
+              <p className="text-4xl font-black text-blue-600">{data.numero}</p>
+            )}
             <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold uppercase ${ESTADO_STYLE[data.estado] || "bg-gray-100 text-gray-700"}`}>
               {data.estado}
             </span>

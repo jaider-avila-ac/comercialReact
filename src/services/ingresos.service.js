@@ -1,5 +1,6 @@
 // src/services/ingresos.service.js
 import { apiFetch, csrfCookie } from "./api";
+import { API_BASE_URL, TOKEN_KEY } from "../config/config";
 
 /**
  * GET /ingresos/unificados
@@ -30,7 +31,7 @@ export async function listarIngresos(params = {}) {
 export async function crearIngreso(descripcion, monto, notas = null, archivo = null) {
   await csrfCookie();
   
-  const token = localStorage.getItem("access_token");
+  const token = localStorage.getItem(TOKEN_KEY);
   const xsrf = getCookie("XSRF-TOKEN");
   
   if (archivo) {
@@ -46,7 +47,7 @@ export async function crearIngreso(descripcion, monto, notas = null, archivo = n
       ...(xsrf ? { "X-XSRF-TOKEN": xsrf } : {}),
     };
     
-    const res = await fetch("/api/ingresos/manuales", {
+    const res = await fetch(`${API_BASE_URL}/api/ingresos/manuales`, {
       method: "POST",
       body: formData,
       credentials: "include",
@@ -78,7 +79,7 @@ export async function crearIngreso(descripcion, monto, notas = null, archivo = n
 export async function actualizarIngreso(id, descripcion, monto, notas = null, archivo = null) {
   await csrfCookie();
   
-  const token = localStorage.getItem("access_token");
+  const token = localStorage.getItem(TOKEN_KEY);
   const xsrf = getCookie("XSRF-TOKEN");
   
   if (archivo) {
@@ -95,7 +96,7 @@ export async function actualizarIngreso(id, descripcion, monto, notas = null, ar
       ...(xsrf ? { "X-XSRF-TOKEN": xsrf } : {}),
     };
     
-    const res = await fetch(`/api/ingresos/manuales/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/api/ingresos/manuales/${id}`, {
       method: "POST",
       body: formData,
       credentials: "include",

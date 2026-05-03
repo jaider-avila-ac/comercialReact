@@ -34,8 +34,8 @@ export function useFacturas() {
     return () => { isMountedRef.current = false; };
   }, [loadFacturas]);
 
-  const handleEmitir = useCallback(async (id, numero) => {
-    const confirmed = await showConfirm(`¿Emitir la factura ${numero}?`, {
+  const handleEmitir = useCallback(async (id) => {
+    const confirmed = await showConfirm("¿Emitir esta factura? Se le asignará un número y no podrá editarse.", {
       title: "Emitir factura",
       okLabel: "Sí, emitir",
     });
@@ -49,8 +49,8 @@ export function useFacturas() {
     }
   }, [loadFacturas]);
 
-  const handleAnular = useCallback(async (id, numero) => {
-    const confirmed = await showConfirm(`¿Anular la factura ${numero}?`, {
+  const handleAnular = useCallback(async (id) => {
+    const confirmed = await showConfirm("¿Anular esta factura? Esta acción no se puede deshacer.", {
       title: "Anular factura",
       okLabel: "Sí, anular",
     });

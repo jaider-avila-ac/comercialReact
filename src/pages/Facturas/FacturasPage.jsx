@@ -36,7 +36,11 @@ export default function FacturasPage() {
 
   const rows = facturas.map(f => ({
     id: f.id,
-    numero: <span className="font-mono font-medium text-blue-600">{f.numero || `#${f.id}`}</span>,
+    numero: f.estado === "BORRADOR" ? (
+      <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Borrador</span>
+    ) : (
+      <span className="font-mono font-medium text-blue-600">{f.numero || `#${f.id}`}</span>
+    ),
     cliente_nombre: <div className="font-semibold text-gray-800">{f.cliente?.nombre_razon_social || "—"}</div>,
     estado_badge: renderEstado(f.estado),
     fecha: f.fecha?.substring(0, 10) || "—",
@@ -61,7 +65,7 @@ export default function FacturasPage() {
               icon={Send}
               title="Emitir"
               variant="success"
-              onClick={() => handleEmitir(row.id, row.numero_raw)}
+              onClick={() => handleEmitir(row.id)}
             />
           </>
         )}
@@ -70,7 +74,7 @@ export default function FacturasPage() {
             icon={XCircle}
             title="Anular"
             variant="danger"
-            onClick={() => handleAnular(row.id, row.numero_raw)}
+            onClick={() => handleAnular(row.id)}
           />
         )}
       </div>

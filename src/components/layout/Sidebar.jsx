@@ -76,7 +76,7 @@ export default function Sidebar({ open, isMobile, onToggle, onClose }) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-4 px-2">
+      <nav className="flex-1 overflow-y-auto py-4 px-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-600 [&::-webkit-scrollbar-track]:bg-transparent [scrollbar-width:thin] [scrollbar-color:var(--color-slate-600)_transparent]">
         {Object.entries(groupedItems).map(([section, items]) => (
           <div key={section}>
             {open && (

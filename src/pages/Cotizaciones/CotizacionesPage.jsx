@@ -57,7 +57,9 @@ export default function CotizacionesPage() {
 
   const rows = cotizaciones.map(c => ({
     id: c.id,
-    numero: (
+    numero: c.estado === "BORRADOR" ? (
+      <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Borrador</span>
+    ) : (
       <span className="font-mono font-medium text-blue-600">
         {c.numero || `#${c.id}`}
       </span>
@@ -94,17 +96,17 @@ export default function CotizacionesPage() {
             <Link to={`/cotizaciones/editar/${row.id}`}>
               <IconButton icon={Pencil} title="Editar" variant="warning" />
             </Link>
-            <IconButton 
-              icon={Send} 
-              title="Emitir" 
-              variant="success" 
-              onClick={() => handleEmitir(row.id, row.numero_raw)} 
+            <IconButton
+              icon={Send}
+              title="Emitir"
+              variant="success"
+              onClick={() => handleEmitir(row.id)}
             />
-            <IconButton 
-              icon={Trash2} 
-              title="Eliminar" 
-              variant="danger" 
-              onClick={() => handleDelete(row.id, row.numero_raw)} 
+            <IconButton
+              icon={Trash2}
+              title="Eliminar"
+              variant="danger"
+              onClick={() => handleDelete(row.id)}
             />
           </>
         )}
@@ -115,7 +117,7 @@ export default function CotizacionesPage() {
               icon={XCircle} 
               title="Anular" 
               variant="danger" 
-              onClick={() => handleAnular(row.id, row.numero_raw)} 
+              onClick={() => handleAnular(row.id)}
             />
             <Link to={`/facturas/nueva?cotizacion_id=${row.id}`}>
               <IconButton icon={FileText} title="Convertir a factura" variant="primary" />
