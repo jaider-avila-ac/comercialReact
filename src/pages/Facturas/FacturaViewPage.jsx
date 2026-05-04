@@ -64,7 +64,7 @@ export default function FacturaViewPage() {
   );
 
   const canEdit = data.estado === "BORRADOR" || data.estado === "EMITIDA";
-  const isAdmin = perfil?.rol === "ADMIN_EMPRESA";
+  const isAdmin = perfil?.rol === "EMPRESA_ADMIN";
 
   return (
     <div className="max-w-4xl mx-auto space-y-4 pb-10">
