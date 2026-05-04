@@ -44,13 +44,14 @@ export default function IngresosPage() {
     const ingreso = ingresos.find(i => i.id === row.id);
     if (!ingreso) return;
 
+    const label = ingreso.tipo === "VENTA_MOSTRADOR" ? "la venta" : "el ingreso";
     const confirmed = await showConfirm(
-      `¿Anular el ingreso "${ingreso.descripcion}"?`,
-      { title: "Anular ingreso", okLabel: "Sí, anular" }
+      `¿Anular ${label} "${ingreso.recibo}"?`,
+      { title: "Anular", okLabel: "Sí, anular" }
     );
-    
+
     if (confirmed) {
-      await anularIngreso(ingreso.id, ingreso.descripcion);
+      await anularIngreso(ingreso.id, ingreso.recibo, ingreso.tipo);
     }
   };
 
@@ -65,10 +66,10 @@ export default function IngresosPage() {
 
   const actions = (row) => {
     const ingreso = ingresos.find(i => i.id === row.id);
-    const esManual = ingreso?.tipo === "INGRESO_MANUAL";
+    const tipo = ingreso?.tipo;
     const anulado = ingreso?.estado === "ANULADO";
 
-    if (!esManual) {
+    if (tipo !== "INGRESO_MANUAL" && tipo !== "VENTA_MOSTRADOR") {
       return <span className="text-gray-400 text-sm">—</span>;
     }
 
@@ -78,13 +79,15 @@ export default function IngresosPage() {
 
     return (
       <div className="flex gap-1">
-        <button
-          onClick={() => handleEditar(row)}
-          className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-          title="Editar"
-        >
-          <i className="bi bi-pencil"></i>
-        </button>
+        {tipo === "INGRESO_MANUAL" && (
+          <button
+            onClick={() => handleEditar(row)}
+            className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+            title="Editar"
+          >
+            <i className="bi bi-pencil"></i>
+          </button>
+        )}
         <button
           onClick={() => handleAnular(row)}
           className="p-1.5 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors"

@@ -1,6 +1,6 @@
 // src/pages/Finanzas/useIngresos.js
 import { useState, useCallback, useRef, useEffect } from "react";
-import { listarIngresos, anularIngreso } from "../../services/ingresos.service";
+import { listarIngresos, anularIngreso, anularVentaMostrador } from "../../services/ingresos.service";
 import { showToast } from "../../utils/notifications";
 
 const formatMoney = (value) => {
@@ -96,14 +96,18 @@ export function useIngresos() {
     }
   }, [filtros, pagination.per_page]);
 
-  const anularIngresoPorId = useCallback(async (id, descripcion) => {
+  const anularIngresoPorId = useCallback(async (id, descripcion, tipo) => {
     try {
-      await anularIngreso(id);
-      showToast(`Ingreso "${descripcion}" anulado.`, "warning");
+      if (tipo === "VENTA_MOSTRADOR") {
+        await anularVentaMostrador(id);
+      } else {
+        await anularIngreso(id);
+      }
+      showToast(`"${descripcion}" anulado.`, "warning");
       await loadIngresos(pagination.current_page);
       return true;
     } catch (error) {
-      showToast(error.message || "Error al anular ingreso", "error");
+      showToast(error.message || "Error al anular", "error");
       return false;
     }
   }, [loadIngresos, pagination.current_page]);

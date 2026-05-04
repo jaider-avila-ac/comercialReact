@@ -32,7 +32,7 @@ export default function Formato4({ data, emp, logoUrl, accentColor, tipo }) {
         {[
           { lbl: "Fecha emisión", val: fmtDate(data.fecha) },
           data.fecha_vencimiento && { lbl: "Fecha vencimiento", val: fmtDate(data.fecha_vencimiento) },
-          { lbl: "Empresa", val: `${emp.nombre} — NIT: ${emp.nit}${emp.matricula ? ` — Matr.: ${emp.matricula}` : ""}` },
+          { lbl: "Empresa", val: [emp.nombre, emp.nit && `NIT: ${emp.nit}`, emp.matricula && `Matr.: ${emp.matricula}`, emp.pagina_web].filter(Boolean).join(" — ") },
         ].filter(Boolean).map(({ lbl, val }) => (
           <div key={lbl} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <span style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: 2, color: "rgba(255,255,255,0.5)", fontWeight: 600 }}>{lbl}</span>

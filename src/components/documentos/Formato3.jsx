@@ -14,7 +14,17 @@ export default function Formato3({ data, emp, logoUrl, accentColor, tipo }) {
       {/* Header */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 40, alignItems: "flex-start", marginBottom: 48 }}>
         <div>
-          {logoUrl && <img src={logoUrl} alt="logo" style={{ height: 44 }} />}
+          {logoUrl && <img src={logoUrl} alt="logo" style={{ height: 44, marginBottom: 4 }} />}
+          {emp.nombre && <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>{emp.nombre}</div>}
+          {(emp.nit || emp.matricula) && (
+            <div style={{ fontSize: 10, color: "#999", marginTop: 3 }}>
+              {[emp.nit && `NIT: ${emp.nit}`, emp.matricula && `Matr.: ${emp.matricula}`].filter(Boolean).join(" · ")}
+            </div>
+          )}
+          {(emp.telefono || emp.email) && (
+            <div style={{ fontSize: 10, color: "#999" }}>{[emp.telefono, emp.email].filter(Boolean).join(" · ")}</div>
+          )}
+          {emp.pagina_web && <div style={{ fontSize: 10, color: "#999" }}>{emp.pagina_web}</div>}
         </div>
         <div style={{ textAlign: "right" }}>
           <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 3, color: "#bbb", fontWeight: 500, marginBottom: 6 }}>{tipo} de venta</div>

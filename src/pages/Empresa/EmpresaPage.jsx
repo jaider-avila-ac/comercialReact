@@ -19,7 +19,9 @@ export default function EmpresaPage() {
   const [formData, setFormData] = useState({
     nombre: "",
     nit: "",
+    matricula: "",
     email: "",
+    pagina_web: "",
     telefono: "",
     direccion: "",
   });
@@ -30,7 +32,9 @@ export default function EmpresaPage() {
       setFormData({
         nombre: empresa.nombre || "",
         nit: empresa.nit || "",
+        matricula: empresa.matricula || "",
         email: empresa.email || "",
+        pagina_web: empresa.pagina_web || "",
         telefono: empresa.telefono || "",
         direccion: empresa.direccion || "",
       });
@@ -213,6 +217,24 @@ export default function EmpresaPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
+                Matrícula mercantil <span className="text-gray-400 text-xs">(opcional)</span>
+              </label>
+              {editando ? (
+                <input
+                  type="text"
+                  name="matricula"
+                  value={formData.matricula}
+                  onChange={handleChange}
+                  placeholder="Ej: 12345-6"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              ) : (
+                <p className="text-gray-800 py-2">{empresa.matricula || "—"}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Correo electrónico
               </label>
               {editando ? (
@@ -242,6 +264,24 @@ export default function EmpresaPage() {
                 />
               ) : (
                 <p className="text-gray-800 py-2">{empresa.telefono || "—"}</p>
+              )}
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Página web <span className="text-gray-400 text-xs">(opcional)</span>
+              </label>
+              {editando ? (
+                <input
+                  type="text"
+                  name="pagina_web"
+                  value={formData.pagina_web}
+                  onChange={handleChange}
+                  placeholder="www.empresa.com"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              ) : (
+                <p className="text-gray-800 py-2">{empresa.pagina_web || "—"}</p>
               )}
             </div>
           </div>

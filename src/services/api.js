@@ -69,7 +69,7 @@ const response = await fetch(`${API_BASE_URL}/api${p}`, {
 }
 
 export async function csrfCookie() {
-  const response = await fetch("/sanctum/csrf-cookie", {
+  const response = await fetch(`${API_BASE_URL}/sanctum/csrf-cookie`, {
     method: "GET",
     credentials: "include",
   });

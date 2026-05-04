@@ -135,6 +135,20 @@ export async function anularIngreso(id) {
   return data;
 }
 
+/**
+ * POST /ingresos/mostrador/{id}/anular
+ * Anular una venta mostrador (venta rápida)
+ */
+export async function anularVentaMostrador(id) {
+  await csrfCookie();
+  const res = await apiFetch(`/ingresos/mostrador/${id}/anular`, {
+    method: "POST",
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.message || "Error al anular venta");
+  return data;
+}
+
 // Helper para obtener cookie
 function getCookie(name) {
   const value = `; ${document.cookie}`;

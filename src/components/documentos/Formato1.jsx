@@ -15,7 +15,12 @@ export default function Formato1({ data, emp, logoUrl, accentColor, tipo }) {
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
-          {logoUrl && <img src={logoUrl} alt="logo" style={{ height: 48, marginBottom: 8 }} />}
+          {logoUrl && <img src={logoUrl} alt="logo" style={{ height: 48, marginBottom: 6 }} />}
+          {emp.nombre && <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>{emp.nombre}</div>}
+          {emp.nit && <div style={{ fontSize: 11, color: "#6b7280" }}>NIT: {emp.nit}</div>}
+          {emp.matricula && <div style={{ fontSize: 11, color: "#6b7280" }}>Matr.: {emp.matricula}</div>}
+          {(emp.telefono || emp.email) && <div style={{ fontSize: 11, color: "#6b7280" }}>{[emp.telefono, emp.email].filter(Boolean).join(" · ")}</div>}
+          {emp.pagina_web && <div style={{ fontSize: 11, color: "#6b7280" }}>{emp.pagina_web}</div>}
         </div>
         <div style={{ textAlign: "right" }}>
           <p style={{ fontSize: 10, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 2 }}>{tipo}</p>
