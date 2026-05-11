@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
-import { RefreshCw, Search, X, Wallet, Zap, PlusCircle, TrendingDown, DollarSign } from "lucide-react";
+import { RefreshCw, Search, X, Wallet, Zap, PlusCircle, TrendingDown, DollarSign, TrendingUp, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
-import KpiCard from "../../components/ui/KpiCard";
 import { useFinanzas } from "./useFinanzas";
 
 export default function FinanzasPage() {
@@ -12,16 +11,11 @@ export default function FinanzasPage() {
     actualizarFiltros({ [campo]: valor });
   };
 
-  const handleFiltrar = () => {
-    recargar();
-  };
-
   const handleLimpiar = () => {
     limpiarFiltros();
-    setTimeout(() => recargar(), 0);
   };
 
-  const mostrarPendientes = kpis.pendientes_count > 0;
+  const balancePositivo = kpis.balance_real >= 0;
 
   return (
     <div className="p-4">
@@ -34,12 +28,12 @@ export default function FinanzasPage() {
           </h1>
           <p className="text-sm text-gray-500">Cobros, ingresos, egresos y balance de caja</p>
         </div>
-        <Button text="Actualizar KPIs" icon={RefreshCw} variant="outline" onClick={recargar} disabled={loading} />
+        <Button text="Actualizar" icon={RefreshCw} variant="outline" onClick={recargar} disabled={loading} />
       </div>
 
-      {/* Filtros */}
+      {/* Filtros por fecha */}
       <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="flex flex-wrap gap-3 items-end">
           <Input
             label="Desde"
             type="date"
@@ -52,81 +46,162 @@ export default function FinanzasPage() {
             value={filtros.hasta}
             onChange={(e) => handleFiltroChange("hasta", e.target.value)}
           />
-          <div className="flex gap-2 items-end">
-            <Button text="Filtrar" icon={Search} variant="primary" onClick={handleFiltrar} />
-            <Button text="Limpiar" icon={X} variant="outline" onClick={handleLimpiar} />
+          <Button text="Limpiar" icon={X} variant="outline" onClick={handleLimpiar} />
+          {loading && (
+            <div className="flex items-center gap-2 text-sm text-gray-500 pb-1">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+              Actualizando...
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Resumen principal — 3 KPIs grandes */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+        <div className="bg-emerald-600 rounded-xl p-5 shadow-md text-white">
+          <div className="flex items-center gap-3">
+            <ArrowUpCircle className="w-10 h-10 text-emerald-200 shrink-0" />
+            <div>
+              <div className="text-xs font-semibold text-emerald-100 uppercase tracking-wide">Total ingresos</div>
+              <div className="text-3xl font-bold leading-tight">{formatMoney(kpis.total_en_caja)}</div>
+              <div className="text-xs text-emerald-100 mt-0.5">Facturas + Mostrador + Manuales</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-red-600 rounded-xl p-5 shadow-md text-white">
+          <div className="flex items-center gap-3">
+            <ArrowDownCircle className="w-10 h-10 text-red-200 shrink-0" />
+            <div>
+              <div className="text-xs font-semibold text-red-100 uppercase tracking-wide">Total egresos</div>
+              <div className="text-3xl font-bold leading-tight">{formatMoney(kpis.total_egresos)}</div>
+              <div className="text-xs text-red-100 mt-0.5">Compras + Gastos manuales</div>
+            </div>
+          </div>
+        </div>
+
+        <div className={`${balancePositivo ? "bg-blue-600" : "bg-orange-600"} rounded-xl p-5 shadow-md text-white`}>
+          <div className="flex items-center gap-3">
+            <Wallet className="w-10 h-10 opacity-60 shrink-0" />
+            <div>
+              <div className="text-xs font-semibold opacity-80 uppercase tracking-wide">Total en caja</div>
+              <div className="text-3xl font-bold leading-tight">{formatMoney(kpis.balance_real)}</div>
+              <div className="text-xs opacity-70 mt-0.5">Ingresos − Egresos</div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* KPIs - SIN iconos, SOLO texto */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
-        <KpiCard
-          title="Ingresos facturas"
-          value={formatMoney(kpis.ingresos_facturas)}
-          subtitle="Pagos aplicados a facturas"
-          color="green"
-        />
-        <KpiCard
-          title="Mostrador"
-          value={formatMoney(kpis.ingresos_mostrador)}
-          subtitle="Ventas de contado"
-          color="purple"
-        />
-        <KpiCard
-          title="Entradas Totales"
-          value={formatMoney(kpis.total_en_caja)}
-          subtitle="Facturas + Mostrador + Ingresos manuales"
-          color="blue"
-        />
-        <KpiCard
-          title="Ingresos manuales"
-          value={formatMoney(kpis.ingresos_manuales)}
-          subtitle="Entradas adicionales"
-          color="orange"
-        />
-        <KpiCard
-          title="Egresos"
-          value={formatMoney(kpis.total_egresos)}
-          subtitle="Compras + Gastos manuales"
-          color="red"
-        />
-        <KpiCard
-          title="Balance real"
-          value={formatMoney(kpis.balance_real)}
-          subtitle="Total en caja − Egresos"
-          color={kpis.balance_real >= 0 ? "green" : "red"}
-          valueColor={kpis.balance_real >= 0 ? "text-emerald-600" : "text-red-600"}
-        />
+      {/* Desglose: ingresos / egresos */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+        {/* Ingresos por tipo */}
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-100 bg-emerald-50">
+            <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 flex items-center gap-1">
+              <TrendingUp className="w-3.5 h-3.5" /> Ingresos por tipo
+            </span>
+          </div>
+          <div className="divide-y divide-gray-100">
+            <div className="flex justify-between items-center px-4 py-3">
+              <div>
+                <div className="text-sm font-medium text-gray-800">Pagos de facturas</div>
+                <div className="text-xs text-gray-400">Cobros aplicados a facturas</div>
+              </div>
+              <div className="text-sm font-bold text-emerald-600">{formatMoney(kpis.ingresos_facturas)}</div>
+            </div>
+            <div className="flex justify-between items-center px-4 py-3">
+              <div>
+                <div className="text-sm font-medium text-gray-800">Ventas mostrador</div>
+                <div className="text-xs text-gray-400">Ventas de contado directas</div>
+              </div>
+              <div className="text-sm font-bold text-emerald-600">{formatMoney(kpis.ingresos_mostrador)}</div>
+            </div>
+            <div className="flex justify-between items-center px-4 py-3">
+              <div>
+                <div className="text-sm font-medium text-gray-800">Ingresos manuales</div>
+                <div className="text-xs text-gray-400">Entradas adicionales registradas</div>
+              </div>
+              <div className="text-sm font-bold text-emerald-600">{formatMoney(kpis.ingresos_manuales)}</div>
+            </div>
+            <div className="flex justify-between items-center px-4 py-3 bg-emerald-50">
+              <div className="text-sm font-bold text-gray-700">Total</div>
+              <div className="text-sm font-bold text-emerald-700">{formatMoney(kpis.total_en_caja)}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Egresos por tipo */}
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-100 bg-red-50">
+            <span className="text-xs font-bold uppercase tracking-wide text-red-700 flex items-center gap-1">
+              <TrendingDown className="w-3.5 h-3.5" /> Egresos por tipo
+            </span>
+          </div>
+          <div className="divide-y divide-gray-100">
+            <div className="flex justify-between items-center px-4 py-3">
+              <div>
+                <div className="text-sm font-medium text-gray-800">Egresos por compras</div>
+                <div className="text-xs text-gray-400">Pagos a proveedores registrados</div>
+              </div>
+              <div className="text-sm font-bold text-red-600">{formatMoney(kpis.egresos_compras)}</div>
+            </div>
+            <div className="flex justify-between items-center px-4 py-3">
+              <div>
+                <div className="text-sm font-medium text-gray-800">Egresos manuales</div>
+                <div className="text-xs text-gray-400">Gastos y salidas adicionales</div>
+              </div>
+              <div className="text-sm font-bold text-red-600">{formatMoney(kpis.egresos_manuales)}</div>
+            </div>
+            <div className="flex justify-between items-center px-4 py-3 bg-red-50">
+              <div className="text-sm font-bold text-gray-700">Total</div>
+              <div className="text-sm font-bold text-red-700">{formatMoney(kpis.total_egresos)}</div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Spinner de carga */}
-      {loading && (
-        <div className="flex justify-center items-center py-2 mb-2">
-          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
-          <span className="ml-2 text-sm text-gray-500">Actualizando...</span>
-        </div>
-      )}
-
-      {/* Indicador de pendientes */}
-      {mostrarPendientes && (
-        <div className="mb-4">
-          <Link to="/finanzas/pendientes" className="block">
-            <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center justify-between hover:bg-red-100 transition-colors">
-              <div className="flex items-center gap-2">
-                <span className="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+      {/* Saldos pendientes */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+        {/* Saldo por cobrar */}
+        <Link to="/finanzas/pendientes" className="block">
+          <div className="bg-white rounded-xl border border-amber-200 p-4 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                  <DollarSign className="w-5 h-5 text-amber-600" />
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Saldo por cobrar</div>
+                  <div className="text-2xl font-bold text-amber-600">{formatMoney(kpis.saldo_pendiente)}</div>
+                  <div className="text-xs text-gray-400 mt-0.5">Lo que me deben los clientes</div>
+                </div>
+              </div>
+              {kpis.pendientes_count > 0 && (
+                <span className="bg-amber-500 text-white rounded-full min-w-6 h-6 px-1.5 flex items-center justify-center text-xs font-bold">
                   {kpis.pendientes_count}
                 </span>
-                <span className="text-red-700 font-medium">Facturas con saldo pendiente</span>
-              </div>
-              <span className="text-red-600 text-sm">Ver detalles →</span>
+              )}
             </div>
-          </Link>
-        </div>
-      )}
+          </div>
+        </Link>
 
-      {/* Módulos adicionales */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Cuentas por pagar */}
+        <div className="bg-white rounded-xl border border-orange-200 p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center shrink-0">
+              <TrendingDown className="w-5 h-5 text-orange-600" />
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Cuentas por pagar</div>
+              <div className="text-2xl font-bold text-orange-600">{formatMoney(kpis.cuentas_por_pagar)}</div>
+              <div className="text-xs text-gray-400 mt-0.5">Lo que debo a proveedores</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Accesos rápidos */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Link to="/finanzas/cobro-rapido" className="block">
           <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow">
             <h6 className="font-semibold text-gray-800 flex items-center gap-2">
@@ -140,7 +215,7 @@ export default function FinanzasPage() {
         <Link to="/finanzas/pendientes" className="block">
           <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow">
             <h6 className="font-semibold text-gray-800 flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-red-500" />
+              <DollarSign className="w-4 h-4 text-amber-500" />
               Saldos pendientes
             </h6>
             <p className="text-xs text-gray-500 mt-1">Facturas con saldo pendiente.</p>

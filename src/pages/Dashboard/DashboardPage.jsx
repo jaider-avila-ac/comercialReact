@@ -105,12 +105,12 @@ export default function DashboardPage() {
         <KpiCard title="Clientes"      value={formatNumber(resumen.total_clientes)}       iconClass="bi bi-people-fill"           color="white" iconColor="blue"    to="/clientes" />
         <KpiCard title="Catálogo"      value={formatNumber(resumen.total_items)}           iconClass="bi bi-box-seam-fill"          color="white" iconColor="indigo"  to="/catalogo" />
         <KpiCard title="Cotizaciones"  value={formatNumber(resumen.cotizaciones_activas)}  iconClass="bi bi-clipboard2-check-fill"  color="white" iconColor="teal"    to="/cotizaciones" />
-        <KpiCard title="Borradores"    value={formatNumber(resumen.facturas_borrador)}     iconClass="bi bi-pencil-square"          color="white" iconColor="amber"   to="/facturas?estado=BORRADOR" />
+        <KpiCard title="Facturas"      value={formatNumber((resumen.facturas_borrador || 0) + (resumen.facturas_emitidas || 0))} iconClass="bi bi-file-earmark-text-fill" color="white" iconColor="amber" to="/facturas" />
       </div>
 
       {/* KPIs financieros grandes */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
-        <KpiCard title="Total recaudado" value={formatMoney(resumen.total_en_caja)}     iconClass="bi bi-check-circle-fill"       color="white" iconColor="emerald" to="/finanzas" large />
+        <KpiCard title="Total en caja" value={formatMoney(resumen.total_en_caja)}     iconClass="bi bi-check-circle-fill"       color="white" iconColor="emerald" to="/finanzas" large />
         <KpiCard title="Saldo pendiente" value={formatMoney(resumen.saldo_pendiente)}   iconClass="bi bi-exclamation-circle-fill" color="white" iconColor="red"     to="/finanzas" large />
       </div>
 

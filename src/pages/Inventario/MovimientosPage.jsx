@@ -59,13 +59,9 @@ export default function MovimientosPage() {
     saldo: formatNumber(m.saldo_resultante),
     usuario: [m.usuario_nombres, m.usuario_apellidos].filter(Boolean).join(" ") || m.usuario_email || `ID ${m.usuario_id}`,
     motivo: m.motivo || "—",
-    referencia: m.referencia_tipo === "FACTURA" 
-      ? (m.factura_numero || "FACTURA") 
-      : m.referencia_tipo === "COMPRA" 
-        ? (m.compra_numero || "COMPRA") 
-        : m.referencia_tipo === "AJUSTE" 
-          ? "AJUSTE" 
-          : (m.referencia_tipo || "—"),
+    referencia: m.referencia_numero
+      ? `${m.referencia_tipo} ${m.referencia_numero}`
+      : (m.referencia_tipo || "—"),
     item: m.item_nombre || `Item ${m.item_id}`,
   }));
 

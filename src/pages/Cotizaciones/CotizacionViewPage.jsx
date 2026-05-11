@@ -4,11 +4,9 @@ import { obtenerCotizacion } from "../../services/cotizaciones.service";
 import { obtenerEmpresa, obtenerLogoUrl, revocarLogoUrl } from "../../services/empresa.service";
 import { Button } from "../../components/ui/Button";
 import { IconButton } from "../../components/ui/IconButton";
-import { ArrowLeft, Pencil, AlertTriangle, Loader2, Palette, Download } from "lucide-react";
+import { ArrowLeft, Pencil, Printer, AlertTriangle, Loader2, Palette } from "lucide-react";
 import DocumentoRenderer from "../../components/documentos/DocumentoRenderer";
 import SelectorTema from "../../components/documentos/SelectorTema";
-import DocumentoPDF from "../../components/documentos/DocumentoPDF";
-import { PDFDownloadLink } from "@react-pdf/renderer";
 import { useAuth } from "../../context/AuthContext";
 
 export default function CotizacionViewPage() {
@@ -72,13 +70,10 @@ export default function CotizacionViewPage() {
 
   const isAdmin = perfil?.rol === "EMPRESA_ADMIN";
 
-  const sanitize = (str) => str?.replace(/[^\w\s\-áéíóúñÁÉÍÓÚÑ]/g, "").replace(/\s+/g, "_") || "";
-  const pdfFileName = `${data.numero || `Cotizacion_${id}`}_${sanitize(data.cliente?.nombre_razon_social)}.pdf`;
-
   return (
     <div className="max-w-4xl mx-auto space-y-4 pb-10">
-      {/* Toolbar */}
-      <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border d-print-none">
+      {/* Toolbar — oculto al imprimir */}
+      <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border print:hidden">
         <div className="flex gap-2">
           <IconButton icon={ArrowLeft} onClick={() => navigate("/cotizaciones")} title="Volver" />
           <IconButton icon={Pencil} onClick={() => navigate(`/cotizaciones/editar/${id}`)} variant="warning" title="Editar" />
@@ -86,22 +81,12 @@ export default function CotizacionViewPage() {
             <IconButton icon={Palette} onClick={() => setShowSelector(true)} title="Cambiar presentación" />
           )}
         </div>
-        <PDFDownloadLink
-          document={<DocumentoPDF data={data} empresa={empresa} logoUrl={logoUrl} tipo="Cotización" />}
-          fileName={pdfFileName}
-        >
-          {({ loading: pdfLoading }) => (
-            <Button
-              text={pdfLoading ? "Generando..." : "Descargar PDF"}
-              icon={Download}
-              variant="primary"
-              disabled={pdfLoading}
-            />
-          )}
-        </PDFDownloadLink>
+        <Button text="Imprimir / PDF" icon={Printer} onClick={() => window.print()} variant="primary" />
       </div>
 
-      <DocumentoRenderer data={data} empresa={empresa} logoUrl={logoUrl} tipo="Cotización" />
+      <div id="doc-print">
+        <DocumentoRenderer data={data} empresa={empresa} logoUrl={logoUrl} tipo="Cotización" />
+      </div>
 
       {showSelector && (
         <SelectorTema

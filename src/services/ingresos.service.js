@@ -11,6 +11,7 @@ export async function listarIngresos(params = {}) {
   
   if (params.search) qs.append("search", params.search);
   if (params.tipo) qs.append("tipo", params.tipo);
+  if (params.estado) qs.append("estado", params.estado);
   if (params.desde) qs.append("desde", params.desde);
   if (params.hasta) qs.append("hasta", params.hasta);
   if (params.per_page) qs.append("per_page", params.per_page);
@@ -132,6 +133,18 @@ export async function anularIngreso(id) {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data?.message || "Error al anular ingreso");
+  return data;
+}
+
+/**
+ * POST /pagos/{id}/anular
+ * Anular un pago de factura desde el listado unificado
+ */
+export async function anularPagoFactura(id) {
+  await csrfCookie();
+  const res = await apiFetch(`/pagos/${id}/anular`, { method: "POST" });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.message || "Error al anular pago");
   return data;
 }
 

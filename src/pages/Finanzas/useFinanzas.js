@@ -13,10 +13,14 @@ export function useFinanzas() {
   const [kpis, setKpis] = useState({
     ingresos_facturas: 0,
     ingresos_mostrador: 0,
-    total_en_caja: 0,
     ingresos_manuales: 0,
+    total_en_caja: 0,
+    egresos_compras: 0,
+    egresos_manuales: 0,
     total_egresos: 0,
     balance_real: 0,
+    saldo_pendiente: 0,
+    cuentas_por_pagar: 0,
     pendientes_count: 0,
   });
   const [loading, setLoading] = useState(true);
@@ -34,14 +38,18 @@ export function useFinanzas() {
       if (filtros.hasta) params.hasta = filtros.hasta;
       const resumen = await getResumen(params);
       const pendData = await facturasPendientes();
-      const pendCount = Array.isArray(pendData.data) ? pendData.data.length : 0;
+      const pendCount = pendData.total ?? (Array.isArray(pendData.data) ? pendData.data.length : 0);
       setKpis({
         ingresos_facturas: resumen.ingresos_facturas || 0,
         ingresos_mostrador: resumen.ingresos_mostrador || 0,
-        total_en_caja: resumen.total_en_caja || 0,
         ingresos_manuales: resumen.ingresos_manuales || 0,
+        total_en_caja: resumen.total_en_caja || 0,
+        egresos_compras: resumen.egresos_compras || 0,
+        egresos_manuales: resumen.egresos_manuales || 0,
         total_egresos: resumen.total_egresos || 0,
         balance_real: resumen.balance_real || 0,
+        saldo_pendiente: resumen.saldo_pendiente || 0,
+        cuentas_por_pagar: resumen.cuentas_por_pagar || 0,
         pendientes_count: pendCount,
       });
     } catch (error) {
@@ -59,14 +67,18 @@ export function useFinanzas() {
     if (filtros.hasta) params.hasta = filtros.hasta;
     Promise.all([getResumen(params), facturasPendientes()])
       .then(([resumen, pendData]) => {
-        const pendCount = Array.isArray(pendData.data) ? pendData.data.length : 0;
+        const pendCount = pendData.total ?? (Array.isArray(pendData.data) ? pendData.data.length : 0);
         setKpis({
           ingresos_facturas: resumen.ingresos_facturas || 0,
           ingresos_mostrador: resumen.ingresos_mostrador || 0,
-          total_en_caja: resumen.total_en_caja || 0,
           ingresos_manuales: resumen.ingresos_manuales || 0,
+          total_en_caja: resumen.total_en_caja || 0,
+          egresos_compras: resumen.egresos_compras || 0,
+          egresos_manuales: resumen.egresos_manuales || 0,
           total_egresos: resumen.total_egresos || 0,
           balance_real: resumen.balance_real || 0,
+          saldo_pendiente: resumen.saldo_pendiente || 0,
+          cuentas_por_pagar: resumen.cuentas_por_pagar || 0,
           pendientes_count: pendCount,
         });
       })

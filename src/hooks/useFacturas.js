@@ -4,6 +4,13 @@ import { showToast, showConfirm } from "../utils/notifications";
 
 export function useFacturas() {
   const [facturas, setFacturas] = useState([]);
+  const [totales, setTotales] = useState({
+    total_activas: 0,
+    total_emitidas: 0,
+    total_borrador: 0,
+    total_saldo_pendiente: 0,
+    total_pagado: 0,
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
@@ -16,7 +23,10 @@ export function useFacturas() {
     setError(null);
     try {
       const data = await listarFacturas({ search, estado });
-      if (isMountedRef.current) setFacturas(data.data || []);
+      if (isMountedRef.current) {
+        setFacturas(data.data || []);
+        if (data.totales) setTotales(data.totales);
+      }
     } catch (err) {
       if (isMountedRef.current) {
         setError(err.message);
@@ -65,7 +75,7 @@ export function useFacturas() {
   }, [loadFacturas]);
 
   return {
-    facturas, loading, error,
+    facturas, totales, loading, error,
     search, setSearch,
     estado, setEstado,
     handleEmitir, handleAnular,

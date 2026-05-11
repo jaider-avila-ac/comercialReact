@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Pencil, Eye, Send, XCircle, Search } from "lucide-react";
+import { Plus, Pencil, Eye, Send, XCircle, Search, DollarSign } from "lucide-react";
 import { IconButton } from "../../components/ui/IconButton";
 import DataTable from "../../components/ui/DataTable";
+import KpiCard from "../../components/ui/KpiCard";
+import CobroModalUnificado from "../../components/ui/CobroModalUnificado";
 import { useFacturas } from "../../hooks/useFacturas";
-import { formatMoney } from "../../services/dashboard.service";
+import { formatMoney, formatNumber } from "../../services/dashboard.service";
 
 const COLUMNS = [
   { key: "numero", label: "Número", sortable: true },
@@ -11,6 +14,8 @@ const COLUMNS = [
   { key: "estado_badge", label: "Estado", sortable: true },
   { key: "fecha", label: "Fecha", sortable: true },
   { key: "total_formateado", label: "Total", sortable: true, align: "right" },
+  { key: "pagado_formateado", label: "Valor pagado", sortable: true, align: "right" },
+  { key: "saldo_formateado", label: "Saldo pendiente", sortable: true, align: "right" },
 ];
 
 const ESTADO_STYLES = {
@@ -21,12 +26,29 @@ const ESTADO_STYLES = {
 
 export default function FacturasPage() {
   const {
-    facturas, loading, error,
+    facturas, totales, loading, error,
     search, setSearch,
     estado, setEstado,
     handleEmitir, handleAnular,
     reload,
   } = useFacturas();
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [facturaSeleccionada, setFacturaSeleccionada] = useState(null);
+
+  const handleCobrar = (row) => {
+    const factura = facturas.find(f => f.id === row.id);
+    if (factura) {
+      setFacturaSeleccionada(factura);
+      setModalOpen(true);
+    }
+  };
+
+  const handlePagoOk = () => {
+    setModalOpen(false);
+    setFacturaSeleccionada(null);
+    reload();
+  };
 
   const renderEstado = (e) => (
     <span className={`px-2 py-1 rounded-full text-xs font-medium ${ESTADO_STYLES[e] || ESTADO_STYLES.BORRADOR}`}>
@@ -47,12 +69,28 @@ export default function FacturasPage() {
     estado_badge: renderEstado(f.estado),
     fecha: f.fecha?.substring(0, 10) || "—",
     total_formateado: <span className="font-semibold text-gray-900">{formatMoney(f.total)}</span>,
+    pagado_formateado: f.estado === "ANULADA" ? (
+      <span className="text-xs text-gray-400">—</span>
+    ) : (f.total_pagado || 0) > 0 ? (
+      <span className="font-semibold text-emerald-600">{formatMoney(f.total_pagado)}</span>
+    ) : (
+      <span className="text-xs text-gray-400">$0</span>
+    ),
+    saldo_formateado: f.estado === "ANULADA" ? (
+      <span className="text-xs text-gray-400">—</span>
+    ) : (f.saldo || 0) > 0 ? (
+      <span className="font-semibold text-amber-600">{formatMoney(f.saldo)}</span>
+    ) : (
+      <span className="text-xs text-emerald-600 font-medium">Pagada</span>
+    ),
     estado_raw: f.estado,
     numero_raw: f.numero,
+    saldo_raw: parseFloat(f.saldo) || 0,
   }));
 
   const renderAcciones = (row) => {
     const isBorrador = row.estado_raw === "BORRADOR";
+    const puedePagar = row.estado_raw !== "ANULADA" && row.saldo_raw > 0;
     return (
       <div className="flex items-center gap-1">
         <Link to={`/facturas/ver/${row.id}`}>
@@ -70,6 +108,14 @@ export default function FacturasPage() {
               onClick={() => handleEmitir(row.id)}
             />
           </>
+        )}
+        {puedePagar && (
+          <IconButton
+            icon={DollarSign}
+            title="Registrar pago"
+            variant="success"
+            onClick={() => handleCobrar(row)}
+          />
         )}
         {row.estado_raw !== "ANULADA" && (
           <IconButton
@@ -113,6 +159,38 @@ export default function FacturasPage() {
         </Link>
       </div>
 
+      {/* KPIs resumen */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <KpiCard
+          title="Facturas activas"
+          value={formatNumber(totales.total_activas)}
+          subtitle={`${formatNumber(totales.total_emitidas)} emitidas · ${formatNumber(totales.total_borrador)} borradores`}
+          iconClass="bi bi-file-earmark-text-fill"
+          color="white"
+          iconColor="blue"
+          to="/facturas"
+        />
+        <KpiCard
+          title="Por cobrar"
+          value={formatMoney(totales.total_saldo_pendiente)}
+          subtitle="Saldo pendiente en facturas emitidas"
+          iconClass="bi bi-hourglass-split"
+          color="white"
+          iconColor="red"
+          to="/finanzas/pendientes"
+        />
+        <KpiCard
+          title="Ya cobrado"
+          value={formatMoney(totales.total_pagado)}
+          subtitle="Total recaudado en pagos de facturas"
+          iconClass="bi bi-check-circle-fill"
+          color="white"
+          iconColor="emerald"
+          to="/finanzas/ingresos"
+        />
+      </div>
+
+      {/* Filtros */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="md:col-span-3 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -151,6 +229,14 @@ export default function FacturasPage() {
           />
         </div>
       </div>
+
+      <CobroModalUnificado
+        key={facturaSeleccionada?.id ?? 0}
+        isOpen={modalOpen}
+        onClose={() => { setModalOpen(false); setFacturaSeleccionada(null); }}
+        onPagoOk={handlePagoOk}
+        factura={facturaSeleccionada}
+      />
     </div>
   );
 }

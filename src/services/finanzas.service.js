@@ -93,106 +93,45 @@ export async function buscarFacturaPorNumero(numero) {
 }
 
 // ─── Dashboard Resumen ───────────────────────────────────────────────────────
+// Cuando se proveen desde+hasta usa /reportes/kpis (filtrado por fecha).
+// Sin fechas usa /dashboard (totales históricos de empresa_resumen).
 export async function getResumen(params = {}) {
-  const qs = new URLSearchParams();
-  if (params.desde) qs.append("desde", params.desde);
-  if (params.hasta) qs.append("hasta", params.hasta);
-  
-  const url = qs.toString() ? `/dashboard?${qs}` : "/dashboard";
-  const res = await apiFetch(url);
+  const { desde, hasta } = params;
+
+  if (desde && hasta) {
+    const qs = new URLSearchParams({ desde, hasta });
+    const res = await apiFetch(`/reportes/kpis?${qs}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.message || "Error al cargar resumen");
+    return {
+      ingresos_facturas:  data.ingresos_facturas  ?? 0,
+      ingresos_mostrador: data.ingresos_mostrador ?? 0,
+      ingresos_manuales:  data.ingresos_manuales  ?? 0,
+      total_en_caja:      data.total_ingresos      ?? 0,
+      egresos_compras:    data.egresos_compras     ?? 0,
+      egresos_manuales:   data.egresos_manuales    ?? 0,
+      total_egresos:      data.total_egresos       ?? 0,
+      balance_real:       data.balance_real        ?? 0,
+      saldo_pendiente:    data.saldo_pendiente     ?? 0,
+      cuentas_por_pagar:  data.cuentas_por_pagar   ?? 0,
+    };
+  }
+
+  const res = await apiFetch("/dashboard");
   const data = await res.json();
   if (!res.ok) throw new Error(data?.message || "Error al cargar resumen");
-  return data.resumen || data;
+  const r = data.resumen || data;
+  return {
+    ingresos_facturas:  r.ingresos_facturas   ?? 0,
+    ingresos_mostrador: r.ingresos_mostrador  ?? 0,
+    ingresos_manuales:  r.ingresos_manuales   ?? 0,
+    total_en_caja:      r.total_en_caja       ?? 0,
+    egresos_compras:    r.egresos_compras     ?? 0,
+    egresos_manuales:   r.egresos_manuales_tot ?? 0,
+    total_egresos:      r.total_egresos       ?? 0,
+    balance_real:       r.balance_real        ?? 0,
+    saldo_pendiente:    r.saldo_pendiente     ?? 0,
+    cuentas_por_pagar:  r.cuentas_por_pagar   ?? 0,
+  };
 }
 
-// ─── Pagos ───────────────────────────────────────────────────────────────────
-export async function listarPagos({ search = "", formaPago = "", fechaDesde = "", fechaHasta = "" } = {}) {
-  const qs = new URLSearchParams();
-  if (search) qs.append("search", search);
-  if (formaPago) qs.append("forma_pago", formaPago);
-  if (fechaDesde) qs.append("fecha_desde", fechaDesde);
-  if (fechaHasta) qs.append("fecha_hasta", fechaHasta);
-  
-  const res = await apiFetch(`/pagos?${qs}`);
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.message || "Error al listar pagos");
-  return data;
-}
-
-// ─── Ingresos ────────────────────────────────────────────────────────────────
-export async function getIngresos(params = {}) {
-  const qs = new URLSearchParams();
-  if (params.search) qs.append("search", params.search);
-  if (params.fecha_desde) qs.append("fecha_desde", params.fecha_desde);
-  if (params.fecha_hasta) qs.append("fecha_hasta", params.fecha_hasta);
-  
-  const res = await apiFetch(`/ingresos/manuales${qs.toString() ? `?${qs}` : ""}`);
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.message || "Error al cargar ingresos");
-  return data;
-}
-
-export async function crearIngreso(data) {
-  await csrfCookie();
-  const res = await apiFetch("/ingresos/manuales", {
-    method: "POST",
-    body: JSON.stringify(data),
-  });
-  return res.json();
-}
-
-export async function actualizarIngreso(id, data) {
-  await csrfCookie();
-  const res = await apiFetch(`/ingresos/manuales/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(data),
-  });
-  return res.json();
-}
-
-export async function anularIngreso(id) {
-  await csrfCookie();
-  const res = await apiFetch(`/ingresos/manuales/${id}/anular`, {
-    method: "POST",
-  });
-  return res.json();
-}
-
-// ─── Egresos ─────────────────────────────────────────────────────────────────
-export async function getEgresos(params = {}) {
-  const qs = new URLSearchParams();
-  if (params.search) qs.append("search", params.search);
-  if (params.fecha_desde) qs.append("fecha_desde", params.fecha_desde);
-  if (params.fecha_hasta) qs.append("fecha_hasta", params.fecha_hasta);
-  
-  const res = await apiFetch(`/egresos/manuales${qs.toString() ? `?${qs}` : ""}`);
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.message || "Error al cargar egresos");
-  return data;
-}
-
-export async function crearEgreso(data) {
-  await csrfCookie();
-  const res = await apiFetch("/egresos/manuales", {
-    method: "POST",
-    body: JSON.stringify(data),
-  });
-  return res.json();
-}
-
-export async function actualizarEgreso(id, data) {
-  await csrfCookie();
-  const res = await apiFetch(`/egresos/manuales/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(data),
-  });
-  return res.json();
-}
-
-export async function anularEgreso(id) {
-  await csrfCookie();
-  const res = await apiFetch(`/egresos/manuales/${id}/anular`, {
-    method: "POST",
-  });
-  return res.json();
-}

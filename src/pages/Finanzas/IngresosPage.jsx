@@ -44,7 +44,7 @@ export default function IngresosPage() {
     const ingreso = ingresos.find(i => i.id === row.id);
     if (!ingreso) return;
 
-    const label = ingreso.tipo === "VENTA_MOSTRADOR" ? "la venta" : "el ingreso";
+    const label = ingreso.tipo === "VENTA_MOSTRADOR" ? "la venta" : ingreso.tipo === "PAGO_FACTURA" ? "el pago" : "el ingreso";
     const confirmed = await showConfirm(
       `¿Anular ${label} "${ingreso.recibo}"?`,
       { title: "Anular", okLabel: "Sí, anular" }
@@ -69,7 +69,7 @@ export default function IngresosPage() {
     const tipo = ingreso?.tipo;
     const anulado = ingreso?.estado === "ANULADO";
 
-    if (tipo !== "INGRESO_MANUAL" && tipo !== "VENTA_MOSTRADOR") {
+    if (tipo !== "INGRESO_MANUAL" && tipo !== "VENTA_MOSTRADOR" && tipo !== "PAGO_FACTURA") {
       return <span className="text-gray-400 text-sm">—</span>;
     }
 
@@ -174,7 +174,7 @@ export default function IngresosPage() {
 
       {/* Filtros */}
       <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
           <div className="relative">
             <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
             <input
@@ -195,6 +195,16 @@ export default function IngresosPage() {
             <option value="PAGO_FACTURA">Pagos factura</option>
             <option value="VENTA_MOSTRADOR">Ventas mostrador</option>
             <option value="INGRESO_MANUAL">Ingresos manuales</option>
+          </select>
+
+          <select
+            value={filtros.estado}
+            onChange={(e) => actualizarFiltros({ estado: e.target.value })}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Todos los estados</option>
+            <option value="ACTIVO">Solo activos</option>
+            <option value="ANULADO">Solo anulados</option>
           </select>
           
           <input

@@ -24,7 +24,7 @@ export function useEgresos() {
   const [filtros, setFiltros] = useState({
     search: "",
     tipo: "",
-    estado: "",
+    estado: "ACTIVO",
     desde: "",
     hasta: "",
   });
@@ -49,8 +49,7 @@ export function useEgresos() {
       });
       
       const rows = response.data || [];
-      const meta = response.meta || {};
-      
+
       let totalSum = 0;
       const egresosData = rows.map(item => {
         totalSum += parseFloat(item.monto) || 0;
@@ -73,15 +72,15 @@ export function useEgresos() {
           updated_at: item.updated_at,
         };
       });
-      
+
       if (isMountedRef.current) {
         setEgresos(egresosData);
         setTotal(totalSum);
         setPagination({
-          current_page: meta.current_page || 1,
-          last_page: meta.last_page || 1,
-          per_page: meta.per_page || 10,
-          total: meta.total || 0,
+          current_page: response.current_page || 1,
+          last_page: response.last_page || 1,
+          per_page: response.per_page || 10,
+          total: response.total || 0,
         });
       }
     } catch (error) {
@@ -145,7 +144,7 @@ export function useEgresos() {
     setFiltros({
       search: "",
       tipo: "",
-      estado: "",
+      estado: "ACTIVO",
       desde: "",
       hasta: "",
     });

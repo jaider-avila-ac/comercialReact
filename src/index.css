@@ -94,3 +94,46 @@
   animation: fadeInRow 0.3s ease forwards;
   opacity: 0;
 }
+
+/* ── Impresión de documentos ─────────────────────────────────────── */
+@media print {
+  @page {
+    size: letter portrait;
+    margin: 0;
+  }
+
+  /* Oculta todo el shell de la app */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Muestra únicamente el área del documento */
+  #doc-print,
+  #doc-print * {
+    visibility: visible !important;
+  }
+
+  /*
+   * position: absolute (no fixed) para que no se repita en cada página.
+   * Con fixed el navegador renderiza el elemento en todas las hojas,
+   * causando la duplicación. Absolute lo ancla a la página 1 y permite
+   * que el contenido largo fluya a páginas siguientes normalmente.
+   */
+  #doc-print {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: white;
+  }
+
+  /*
+   * Eliminar minHeight forzado de los Formato (960px / 900px inline).
+   * Sin esto, aunque haya pocos ítems la hoja empuja contenido a una
+   * segunda página en blanco.
+   */
+  #doc-print > div,
+  #doc-print > div > div {
+    min-height: 0 !important;
+  }
+}

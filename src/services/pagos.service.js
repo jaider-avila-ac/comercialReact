@@ -1,26 +1,10 @@
 import { apiFetch, csrfCookie } from "./api";
 
 // ─── Servicio de Pagos ───────────────────────────────────────────────────────
-// Endpoints utilizados en pagos.ui.js y otros módulos
-
-/**
- * POST /facturas/{factura_id}/pagos
- * Registrar un nuevo pago (versión con factura en URL)
- */
-export async function registrarPagoPorFactura(payload) {
-  await csrfCookie();
-  const res = await apiFetch(`/facturas/${payload.factura_id}/pagos`, {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.message || "Error al registrar pago");
-  return data;
-}
 
 /**
  * POST /pagos
- * Registrar un nuevo pago (versión directa)
+ * Registrar un nuevo pago de factura
  */
 export async function registrarPago(payload) {
   await csrfCookie();
@@ -53,6 +37,18 @@ export async function obtenerHistorialPagos(facturaId) {
   const data = await res.json();
   if (!res.ok) throw new Error(data?.message || "Error al obtener historial de pagos");
   return data.pagos || [];
+}
+
+/**
+ * POST /pagos/{id}/anular
+ * Anular un pago de factura
+ */
+export async function anularPago(id) {
+  await csrfCookie();
+  const res = await apiFetch(`/pagos/${id}/anular`, { method: "POST" });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.message || "Error al anular pago");
+  return data;
 }
 
 /**

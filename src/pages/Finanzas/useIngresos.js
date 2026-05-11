@@ -1,6 +1,6 @@
 // src/pages/Finanzas/useIngresos.js
 import { useState, useCallback, useRef, useEffect } from "react";
-import { listarIngresos, anularIngreso, anularVentaMostrador } from "../../services/ingresos.service";
+import { listarIngresos, anularIngreso, anularVentaMostrador, anularPagoFactura } from "../../services/ingresos.service";
 import { showToast } from "../../utils/notifications";
 
 const formatMoney = (value) => {
@@ -30,6 +30,7 @@ export function useIngresos() {
   const [filtros, setFiltros] = useState({
     search: "",
     tipo: "",
+    estado: "ACTIVO",
     desde: "",
     hasta: "",
   });
@@ -45,6 +46,7 @@ export function useIngresos() {
       const response = await listarIngresos({
         search: filtros.search,
         tipo: filtros.tipo,
+        estado: filtros.estado,
         desde: filtros.desde,
         hasta: filtros.hasta,
         per_page: pagination.per_page,
@@ -52,11 +54,10 @@ export function useIngresos() {
       });
       
       const rows = response.data || [];
-      const meta = response.meta || {};
-      
+
       let totalSum = 0;
       const ingresosData = rows.map(item => {
-        totalSum += parseFloat(item.monto) || 0;
+        if (item.estado !== 'ANULADO') totalSum += parseFloat(item.monto) || 0;
         return {
           id: item.id,
           recibo: item.recibo || `ING-${item.id}`,
@@ -73,15 +74,15 @@ export function useIngresos() {
           estado: item.estado || "ACTIVO",
         };
       });
-      
+
       if (isMountedRef.current) {
         setIngresos(ingresosData);
         setTotal(totalSum);
         setPagination({
-          current_page: meta.current_page || 1,
-          last_page: meta.last_page || 1,
-          per_page: meta.per_page || 10,
-          total: meta.total || 0,
+          current_page: response.current_page || 1,
+          last_page: response.last_page || 1,
+          per_page: response.per_page || 10,
+          total: response.total || 0,
         });
       }
     } catch (error) {
@@ -100,6 +101,8 @@ export function useIngresos() {
     try {
       if (tipo === "VENTA_MOSTRADOR") {
         await anularVentaMostrador(id);
+      } else if (tipo === "PAGO_FACTURA") {
+        await anularPagoFactura(id);
       } else {
         await anularIngreso(id);
       }
@@ -138,7 +141,7 @@ export function useIngresos() {
   // Cargar cuando cambien otros filtros
   useEffect(() => {
     loadIngresos(1);
-  }, [filtros.tipo, filtros.desde, filtros.hasta, loadIngresos]);
+  }, [filtros.tipo, filtros.estado, filtros.desde, filtros.hasta, loadIngresos]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -155,6 +158,7 @@ export function useIngresos() {
     setFiltros({
       search: "",
       tipo: "",
+      estado: "ACTIVO",
       desde: "",
       hasta: "",
     });
