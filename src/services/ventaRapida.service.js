@@ -2,7 +2,7 @@ import { apiFetch, csrfCookie } from "./api";
 
 // ── Buscar items — usa el endpoint /items
 export async function buscarItems({ search = "", tipo = "", page = 1 } = {}) {
-  const p = new URLSearchParams({ page, per_page: 20 });
+  const p = new URLSearchParams({ page, per_page: 80 });
   if (search) p.set("search", search);
   if (tipo) p.set("tipo", tipo);
   

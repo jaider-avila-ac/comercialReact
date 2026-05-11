@@ -119,20 +119,26 @@ export default function VentaRapidaPage() {
     }
   };
 
+  const doSearch = async (search) => {
+    try {
+      const results = await buscarItems({ search });
+      showItems(results);
+    } catch (err) {
+      console.error("Error buscando items:", err);
+      showItems([]);
+    }
+  };
+
+  const handleItemFocus = () => {
+    if (itemInputRef.current?.disabled) return;
+    doSearch("");
+  };
+
   const handleItemInput = (e) => {
     if (itemInputRef.current?.disabled) return;
     const value = e.target.value;
     if (itemTimerRef.current) clearTimeout(itemTimerRef.current);
-    itemTimerRef.current = setTimeout(async () => {
-      if (!value || value.length < 1) { hideItems(); return; }
-      try {
-        const results = await buscarItems({ search: value });
-        showItems(results);
-      } catch (err) {
-        console.error("Error buscando items:", err);
-        showItems([]);
-      }
-    }, 200);
+    itemTimerRef.current = setTimeout(() => doSearch(value), 200);
   };
 
   useEffect(() => {
@@ -211,8 +217,9 @@ export default function VentaRapidaPage() {
               <input
                 ref={itemInputRef}
                 type="text"
+                onFocus={handleItemFocus}
                 onChange={handleItemInput}
-                placeholder="Escribe para buscar producto, insumo o servicio…"
+                placeholder="Buscar producto, insumo o servicio…"
                 className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${itemSeleccionado ? "bg-gray-100" : ""}`}
                 disabled={!!itemSeleccionado}
                 autoComplete="off"

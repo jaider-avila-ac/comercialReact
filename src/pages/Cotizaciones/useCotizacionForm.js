@@ -72,6 +72,12 @@ export function useCotizacionForm() {
     setLoading(true);
     try {
       const data = await obtenerCotizacion(id);
+
+      if (data.tipo === 'LIBRE') {
+        navigate(`/cotizaciones/editar-libre/${id}`, { replace: true });
+        return;
+      }
+
       setCotizacionId(data.id);
       setNumero(data.numero);
       setEstado(data.estado);

@@ -1,10 +1,11 @@
-import { useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Save, Send, XCircle, Calendar, Receipt } from "lucide-react";
+import { ArrowLeft, Save, Send, XCircle, Calendar, Receipt, UserPlus } from "lucide-react";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import SearchSelect from "../ui/SearchSelect";
-import LineasTable from "./LineasTable";
+import LineasLibreTable from "./LineasLibreTable";
+import ClienteRapidoModal from "./ClienteRapidoModal";
 import { apiFetch } from "../../services/api";
 
 const formatMoney = (value) =>
@@ -12,22 +13,24 @@ const formatMoney = (value) =>
 
 const CONFIG = {
   cotizacion: {
-    tituloNuevo: "Nueva Cotización",
-    tituloEdicion: (num) => `Cotización #${num}`,
+    tituloNuevo: "Nueva Cotización Libre",
+    tituloEdicion: (num) => `Cotización Libre #${num}`,
     rutaLista: "/cotizaciones",
     hasFechaVencimiento: true,
     labelEmitir: "Emitir cotización",
+    labelDocumento: "cotización libre",
   },
   factura: {
-    tituloNuevo: "Nueva Factura",
-    tituloEdicion: (num) => `Factura #${num}`,
+    tituloNuevo: "Nueva Factura Libre",
+    tituloEdicion: (num) => `Factura Libre #${num}`,
     rutaLista: "/facturas",
     hasFechaVencimiento: false,
     labelEmitir: "Emitir factura",
+    labelDocumento: "factura libre",
   },
 };
 
-export default function DocumentoFormPage({
+export default function DocumentoLibreFormPage({
   modo,
   documentoId,
   numero,
@@ -53,7 +56,8 @@ export default function DocumentoFormPage({
   const navigate = useNavigate();
   const cfg = CONFIG[modo];
 
-  // --- búsqueda asíncrona de clientes (backend) ---
+  const [modalClienteOpen, setModalClienteOpen] = useState(false);
+
   const searchClientes = useCallback(async (q) => {
     const qs = new URLSearchParams({ per_page: 80 });
     if (q) qs.set("search", q);
@@ -62,30 +66,16 @@ export default function DocumentoFormPage({
     return (data.data ?? []).map(c => ({ id: c.id, label: c.nombre_razon_social }));
   }, []);
 
-  // --- búsqueda asíncrona de items (backend) ---
-  const searchItems = useCallback(async (q) => {
-    const qs = new URLSearchParams({ per_page: 80, activos: "1" });
-    if (q) qs.set("search", q);
-    const res = await apiFetch(`/items?${qs}`);
-    const data = await res.json();
-    return (data.data ?? []).map(it => ({
-      id: it.id,
-      label: it.nombre,
-      precio: it.precio_venta_sugerido ?? null,
-    }));
-  }, []);
-
-  // Fallback estático para mostrar el label del cliente ya seleccionado
-  const selectedClientFallback = formData.cliente
-    ? [{ id: formData.cliente.id, label: formData.cliente.nombre_razon_social ?? formData.cliente.nombre ?? "" }]
-    : [];
-
   const handleClienteChange = (id) => {
     updateCliente(id ? { id } : null);
   };
 
   const handleClienteSelected = (item) => {
     if (item) updateCliente({ id: item.id, nombre_razon_social: item.label });
+  };
+
+  const handleClienteCreado = (cliente) => {
+    updateCliente(cliente);
   };
 
   if (loading) {
@@ -99,12 +89,16 @@ export default function DocumentoFormPage({
 
   return (
     <div className="p-4 max-w-6xl mx-auto">
-      {/* Encabezado */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">
-            {isEditing ? cfg.tituloEdicion(numero ?? documentoId) : cfg.tituloNuevo}
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-gray-800">
+              {isEditing ? cfg.tituloEdicion(numero ?? documentoId) : cfg.tituloNuevo}
+            </h1>
+            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-violet-100 text-violet-700 border border-violet-200">
+              LIBRE
+            </span>
+          </div>
           {estado && (
             <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded">
               {estado}
@@ -117,17 +111,35 @@ export default function DocumentoFormPage({
       {/* Datos generales */}
       <div className="bg-white rounded-xl border p-4 mb-4 shadow-sm">
         <div className={`grid grid-cols-1 gap-4 ${cfg.hasFechaVencimiento ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
-          <SearchSelect
-            label="Cliente"
-            required
-            items={selectedClientFallback}
-            onSearch={searchClientes}
-            onSelectItem={handleClienteSelected}
-            value={formData.cliente?.id ?? null}
-            onChange={handleClienteChange}
-            placeholder="Buscar cliente..."
-            disabled={!isEditable}
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Cliente <span className="text-red-500">*</span>
+            </label>
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <SearchSelect
+                  items={formData.cliente ? [{ id: formData.cliente.id, label: formData.cliente.nombre_razon_social ?? formData.cliente.nombre ?? "" }] : []}
+                  onSearch={searchClientes}
+                  onSelectItem={handleClienteSelected}
+                  value={formData.cliente?.id ?? null}
+                  onChange={handleClienteChange}
+                  placeholder="Buscar cliente..."
+                  disabled={!isEditable}
+                />
+              </div>
+              {isEditable && (
+                <button
+                  type="button"
+                  onClick={() => setModalClienteOpen(true)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 hover:border-blue-400 hover:text-blue-600 transition-colors flex items-center gap-1 whitespace-nowrap"
+                  title="Crear cliente rápido"
+                >
+                  <UserPlus size={15} />
+                  Nuevo
+                </button>
+              )}
+            </div>
+          </div>
           <Input
             id="fecha"
             label="Fecha"
@@ -199,12 +211,11 @@ export default function DocumentoFormPage({
         </div>
       </div>
 
-      {/* Ítems */}
-      <LineasTable
+      {/* Ítems libres */}
+      <LineasLibreTable
         lineas={formData.lineas}
         modoIva={formData.modoIva}
         ivaGlobal={formData.ivaGlobal}
-        onSearchItems={searchItems}
         onUpdate={updateLinea}
         onRemove={removeLinea}
         onAdd={addLinea}
@@ -248,6 +259,12 @@ export default function DocumentoFormPage({
           <Button text="Anular" icon={XCircle} variant="danger" onClick={anular} />
         )}
       </div>
+
+      <ClienteRapidoModal
+        isOpen={modalClienteOpen}
+        onClose={() => setModalClienteOpen(false)}
+        onCreated={handleClienteCreado}
+      />
     </div>
   );
 }

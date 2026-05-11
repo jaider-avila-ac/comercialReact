@@ -34,6 +34,9 @@ import CatalogoFormPage from "../pages/Catalogo/CatalogoFormPage";
 import ComprasPage from "../pages/Compras/ComprasPage";
 import MovimientosPage from "../pages/Inventario/MovimientosPage";
 
+import FacturaLibreFormPage from "../pages/Facturas/FacturaLibreFormPage";
+import CotizacionLibreFormPage from "../pages/Cotizaciones/CotizacionLibreFormPage";
+
 import EmpresaPage from "../pages/Empresa/EmpresaPage";
 
 function PublicRoute({ children }) {
@@ -68,6 +71,8 @@ export default function AppRouter() {
                 <Route path="cotizaciones/nueva" element={<CotizacionFormPage />} />
                 <Route path="cotizaciones/editar/:id" element={<CotizacionFormPage />} />
                 <Route path="cotizaciones/ver/:id" element={<CotizacionViewPage />} />
+                <Route path="cotizaciones/nueva-libre" element={<CotizacionLibreFormPage />} />
+                <Route path="cotizaciones/editar-libre/:id" element={<CotizacionLibreFormPage />} />
                 <Route path="ajustes/brevo" element={<BrevoPage />} />
 
                 <Route path="reportes" element={<ReportesPage />} />
@@ -79,6 +84,8 @@ export default function AppRouter() {
                 <Route path="facturas/nueva" element={<FacturaFormPage />} />
                 <Route path="facturas/editar/:id" element={<FacturaFormPage />} />
                 <Route path="facturas/ver/:id" element={<FacturaViewPage />} />
+                <Route path="facturas/nueva-libre" element={<FacturaLibreFormPage />} />
+                <Route path="facturas/editar-libre/:id" element={<FacturaLibreFormPage />} />
 
                 <Route path="finanzas/egresos" element={<EgresosPage />} />
 

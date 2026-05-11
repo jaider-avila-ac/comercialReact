@@ -1,7 +1,6 @@
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { IconButton } from "../ui/IconButton";
-import SearchSelect from "../ui/SearchSelect";
 
 const numCls = (extra = "") =>
   `w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${extra}`;
@@ -11,51 +10,20 @@ const txtCls = (hasError) =>
     hasError ? "border-red-400 bg-red-50 focus:ring-red-400" : "border-gray-300 focus:ring-blue-500"
   }`;
 
-function LineaRow({ linea, index, modoIva, ivaGlobal, onUpdate, onRemove, isEditable, onSearchItems, submitted }) {
+const fmt = (v) =>
+  new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(v || 0);
+
+function LineaLibreRow({ linea, index, modoIva, ivaGlobal, onUpdate, onRemove, isEditable, submitted }) {
   const base = linea.cantidad * linea.valor_unitario;
-  const subtotal = base - linea.descuento;
-  const pct = modoIva === "global" ? ivaGlobal : linea.iva_pct;
+  const subtotal = base - (linea.descuento || 0);
+  const pct = modoIva === "global" ? ivaGlobal : (linea.iva_pct || 0);
   const total = subtotal * (1 + pct / 100);
 
-  const fmt = (v) =>
-    new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(v || 0);
-
-  const handleSelectItem = (id) => {
-    onUpdate(index, "item_id", id ?? null);
-    if (!id) onUpdate(index, "descripcion", "");
-  };
-
-  const handleSelectItemFull = (item) => {
-    if (!item) return;
-    onUpdate(index, "descripcion", item.label);
-    if (item.precio != null) onUpdate(index, "valor_unitario", item.precio);
-  };
-
-  // Fallback: show selected item label from the linea's own descripcion
-  const selectedItemFallback = linea.item_id
-    ? [{ id: linea.item_id, label: linea.descripcion || String(linea.item_id) }]
-    : [];
-
-  const itemError = submitted && !linea.item_id;
   const descError = submitted && !linea.descripcion?.trim();
 
   return (
     <tr className="border-b hover:bg-gray-50 align-middle">
-      {/* Ítem (obligatorio) */}
-      <td className="p-2 min-w-45">
-        <SearchSelect
-          items={selectedItemFallback}
-          onSearch={onSearchItems}
-          onSelectItem={handleSelectItemFull}
-          value={linea.item_id}
-          onChange={handleSelectItem}
-          placeholder="Ítem *"
-          disabled={!isEditable}
-          error={itemError}
-        />
-      </td>
-      {/* Descripción (obligatoria) */}
-      <td className="p-2 min-w-40">
+      <td className="p-2 min-w-52">
         <input
           className={txtCls(descError)}
           value={linea.descripcion}
@@ -64,7 +32,6 @@ function LineaRow({ linea, index, modoIva, ivaGlobal, onUpdate, onRemove, isEdit
           disabled={!isEditable}
         />
       </td>
-      {/* Cantidad */}
       <td className="p-2 w-20">
         <input
           className={numCls("w-20")}
@@ -75,7 +42,6 @@ function LineaRow({ linea, index, modoIva, ivaGlobal, onUpdate, onRemove, isEdit
           disabled={!isEditable}
         />
       </td>
-      {/* Valor unitario */}
       <td className="p-2 w-28">
         <input
           className={numCls("w-28")}
@@ -86,7 +52,6 @@ function LineaRow({ linea, index, modoIva, ivaGlobal, onUpdate, onRemove, isEdit
           disabled={!isEditable}
         />
       </td>
-      {/* Descuento */}
       <td className="p-2 w-24">
         <input
           className={numCls("w-24")}
@@ -97,7 +62,6 @@ function LineaRow({ linea, index, modoIva, ivaGlobal, onUpdate, onRemove, isEdit
           disabled={!isEditable}
         />
       </td>
-      {/* IVA % — solo en modo linea */}
       {modoIva === "linea" && (
         <td className="p-2 w-16">
           <input
@@ -110,9 +74,7 @@ function LineaRow({ linea, index, modoIva, ivaGlobal, onUpdate, onRemove, isEdit
           />
         </td>
       )}
-      {/* Total (readonly) */}
       <td className="p-2 text-right font-semibold text-sm whitespace-nowrap">{fmt(total)}</td>
-      {/* Eliminar */}
       <td className="p-2 text-center w-10">
         {isEditable && (
           <IconButton icon={Trash2} variant="danger" onClick={() => onRemove(index)} title="Eliminar línea" />
@@ -122,36 +84,11 @@ function LineaRow({ linea, index, modoIva, ivaGlobal, onUpdate, onRemove, isEdit
   );
 }
 
-export default function LineasTable({
-  lineas = [],
-  modoIva,
-  ivaGlobal,
-  onUpdate,
-  onRemove,
-  onAdd,
-  isEditable,
-  // Legacy prop kept for backward compatibility (ignored when onSearchItems is provided)
-  items = [],
-  onSearchItems = null,
-  submitted = false,
-}) {
-  // If no async search function, build a local search from the static items list
-  const searchFn = onSearchItems ?? (
-    items.length > 0
-      ? async (q) => {
-          const lq = q.toLowerCase();
-          return (lq
-            ? items.filter(it => it.label.toLowerCase().includes(lq))
-            : items
-          ).slice(0, 80);
-        }
-      : null
-  );
-
+export default function LineasLibreTable({ lineas = [], modoIva, ivaGlobal, onUpdate, onRemove, onAdd, isEditable, submitted = false }) {
   return (
     <div className="bg-white rounded-xl border mb-4 shadow-sm">
       <div className="p-3 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
-        <h3 className="font-semibold text-gray-700">Ítems</h3>
+        <h3 className="font-semibold text-gray-700">Ítems libres</h3>
         {isEditable && (
           <Button text="Agregar ítem" icon={Plus} variant="outline" onClick={onAdd} />
         )}
@@ -160,7 +97,6 @@ export default function LineasTable({
         <table className="w-full text-sm">
           <thead className="bg-gray-100 text-gray-600">
             <tr>
-              <th className="p-2 text-left">Ítem</th>
               <th className="p-2 text-left">Descripción</th>
               <th className="p-2 text-right">Cant.</th>
               <th className="p-2 text-right">Precio unit.</th>
@@ -172,7 +108,7 @@ export default function LineasTable({
           </thead>
           <tbody>
             {lineas.map((linea, i) => (
-              <LineaRow
+              <LineaLibreRow
                 key={linea.id}
                 linea={linea}
                 index={i}
@@ -181,7 +117,6 @@ export default function LineasTable({
                 onUpdate={onUpdate}
                 onRemove={onRemove}
                 isEditable={isEditable}
-                onSearchItems={searchFn}
                 submitted={submitted}
               />
             ))}

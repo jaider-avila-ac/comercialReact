@@ -1,17 +1,22 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { showToast } from "../../utils/notifications";
-import { obtenerFactura, crearFactura, actualizarFactura } from "../../services/facturas.service";
-import { obtenerCotizacion } from "../../services/cotizaciones.service";
-import { listarClientes } from "../../services/clientes.service";
-import { listarItems } from "../../services/catalogo.service";
+import { obtenerCotizacion, crearCotizacion, actualizarCotizacion } from "../../services/cotizaciones.service";
 import {
-  emitirFactura as emitirAction,
-  anularFactura as anularAction,
-} from "./actions";
+  emitirCotizacion as emitirAction,
+  anularCotizacion as anularAction,
+  confirmarVigencia as confirmarVigenciaAction,
+  convertirAFactura as convertirAction,
+} from "./actions/index";
 
 const getTodayISO = () => {
   const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
+const getVencimientoISO = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 7);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 
@@ -25,12 +30,10 @@ const makeLinea = () => ({
   iva_pct: 19,
 });
 
-export function useFacturaForm() {
+export function useCotizacionLibreForm() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const [searchParams] = useSearchParams();
-  const cotizacionOrigen = searchParams.get("cotizacion_id");
-  const isEditing = !!id && id !== "nueva";
+  const isEditing = !!id && id !== "nueva-libre";
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -38,12 +41,13 @@ export function useFacturaForm() {
   const [formData, setFormData] = useState(() => ({
     cliente: null,
     fecha: getTodayISO(),
+    fecha_vencimiento: getVencimientoISO(),
     notas: "",
     modoIva: "global",
     ivaGlobal: 19,
     lineas: [makeLinea()],
   }));
-  const [facturaId, setFacturaId] = useState(null);
+  const [cotizacionId, setCotizacionId] = useState(null);
   const [numero, setNumero] = useState(null);
   const [estado, setEstado] = useState(null);
 
@@ -61,18 +65,12 @@ export function useFacturaForm() {
     }, { subtotal: 0, descuentos: 0, iva: 0, total: 0 }),
   [formData.lineas, formData.modoIva, formData.ivaGlobal]);
 
-  const loadFactura = useCallback(async () => {
+  const loadCotizacion = useCallback(async () => {
     if (!isEditing) return;
     setLoading(true);
     try {
-      const data = await obtenerFactura(id);
-
-      if (data.tipo === 'LIBRE') {
-        navigate(`/facturas/editar-libre/${id}`, { replace: true });
-        return;
-      }
-
-      setFacturaId(data.id);
+      const data = await obtenerCotizacion(id);
+      setCotizacionId(data.id);
       setNumero(data.numero);
       setEstado(data.estado);
 
@@ -93,6 +91,7 @@ export function useFacturaForm() {
       setFormData({
         cliente: data.cliente || null,
         fecha: data.fecha?.substring(0, 10) || getTodayISO(),
+        fecha_vencimiento: data.fecha_vencimiento?.substring(0, 10) || getVencimientoISO(),
         notas: data.notas || "",
         modoIva,
         ivaGlobal,
@@ -105,67 +104,11 @@ export function useFacturaForm() {
     }
   }, [id, isEditing]);
 
-  const loadFromCotizacion = useCallback(async (cotId) => {
-    setLoading(true);
-    try {
-      const cot = await obtenerCotizacion(cotId);
-      const lineasData = (cot.lineas || []).map(l => ({
-        id: crypto.randomUUID(),
-        item_id: l.item_id,
-        descripcion: l.descripcion_manual || l.item?.nombre || "",
-        cantidad: parseFloat(l.cantidad) || 1,
-        valor_unitario: parseFloat(l.valor_unitario) || 0,
-        descuento: parseFloat(l.descuento) || 0,
-        iva_pct: parseFloat(l.iva_pct) || 19,
-      }));
-      const ivasPct = [...new Set(lineasData.map(l => String(l.iva_pct)))];
-      const modoIva = ivasPct.length === 1 && ivasPct[0] !== "0" ? "global" : "linea";
-      const ivaGlobal = modoIva === "global" ? Number(ivasPct[0]) : 19;
-      setFormData({
-        cliente: cot.cliente || null,
-        fecha: getTodayISO(),
-        notas: cot.notas || "",
-        modoIva,
-        ivaGlobal,
-        lineas: lineasData.length > 0 ? lineasData : [makeLinea()],
-      });
-    } catch (error) {
-      showToast(error.message, "error");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isEditing || cotizacionOrigen) return;
-    (async () => {
-      try {
-        const [clientes, items] = await Promise.all([
-          listarClientes({ perPage: 1, page: 1 }),
-          listarItems({ perPage: 1, page: 1 }),
-        ]);
-        if ((clientes.total ?? 0) === 0) {
-          showToast("Primero debes registrar al menos un cliente antes de crear una factura.", "warning");
-          navigate(-1);
-          return;
-        }
-        if ((items.total ?? 0) === 0) {
-          showToast("Primero debes agregar al menos un producto o servicio en el catálogo.", "warning");
-          navigate(-1);
-        }
-      } catch { /* si el chequeo falla el form sigue disponible */ }
-    })();
-  }, [isEditing, cotizacionOrigen, navigate]);
-
   useEffect(() => {
     if (isEditing) {
-      const run = async () => { await loadFactura(); };
-      run();
-    } else if (cotizacionOrigen) {
-      const run = async () => { await loadFromCotizacion(cotizacionOrigen); };
-      run();
+      loadCotizacion();
     }
-  }, [isEditing, loadFactura, cotizacionOrigen, loadFromCotizacion]);
+  }, [isEditing, loadCotizacion]);
 
   const guardar = async () => {
     setSubmitted(true);
@@ -178,12 +121,7 @@ export function useFacturaForm() {
       return;
     }
     for (let i = 0; i < formData.lineas.length; i++) {
-      const l = formData.lineas[i];
-      if (!l.item_id) {
-        showToast(`Línea ${i + 1}: selecciona un ítem del catálogo`, "error");
-        return;
-      }
-      if (!l.descripcion?.trim()) {
+      if (!formData.lineas[i].descripcion?.trim()) {
         showToast(`Línea ${i + 1}: la descripción es obligatoria`, "error");
         return;
       }
@@ -191,11 +129,13 @@ export function useFacturaForm() {
     setSaving(true);
     try {
       const payload = {
+        tipo: "LIBRE",
         cliente_id: formData.cliente.id,
         fecha: formData.fecha,
+        fecha_vencimiento: formData.fecha_vencimiento,
         notas: formData.notas || null,
         lineas: formData.lineas.map(l => ({
-          item_id: l.item_id,
+          item_id: null,
           descripcion_manual: l.descripcion || null,
           cantidad: l.cantidad,
           valor_unitario: l.valor_unitario,
@@ -203,14 +143,14 @@ export function useFacturaForm() {
           iva_pct: formData.modoIva === "global" ? formData.ivaGlobal : l.iva_pct,
         })),
       };
-      if (isEditing && facturaId) {
-        await actualizarFactura(facturaId, payload);
-        showToast("Factura actualizada", "success");
-        await loadFactura();
+      if (isEditing && cotizacionId) {
+        await actualizarCotizacion(cotizacionId, payload);
+        showToast("Cotización actualizada", "success");
+        await loadCotizacion();
       } else {
-        const result = await crearFactura(payload);
-        showToast("Factura creada", "success");
-        navigate(`/facturas/editar/${result.id}`);
+        const result = await crearCotizacion(payload);
+        showToast("Cotización libre creada", "success");
+        navigate(`/cotizaciones/editar-libre/${result.id}`);
       }
     } catch (error) {
       showToast(error.message, "error");
@@ -220,13 +160,23 @@ export function useFacturaForm() {
   };
 
   const emitir = async () => {
-    if (!facturaId) { showToast("Primero guarda la factura", "warning"); return; }
-    await emitirAction(facturaId, loadFactura);
+    if (!cotizacionId) { showToast("Primero guarda la cotización", "warning"); return; }
+    await emitirAction(cotizacionId, loadCotizacion);
   };
 
   const anular = async () => {
-    if (!facturaId) return;
-    await anularAction(facturaId, loadFactura);
+    if (!cotizacionId) return;
+    await anularAction(cotizacionId, loadCotizacion);
+  };
+
+  const confirmarVigenciaCotizacion = async () => {
+    if (!cotizacionId) return;
+    await confirmarVigenciaAction(cotizacionId, formData.fecha_vencimiento, loadCotizacion);
+  };
+
+  const convertir = async () => {
+    if (!cotizacionId) { showToast("Primero guarda la cotización", "warning"); return; }
+    await convertirAction(cotizacionId, navigate);
   };
 
   const updateCliente = (cliente) => setFormData(prev => ({ ...prev, cliente }));
@@ -251,8 +201,8 @@ export function useFacturaForm() {
 
   return {
     loading, saving, submitted, formData, totales,
-    facturaId, numero, estado, isEditing, isEditable,
-    guardar, emitir, anular,
+    cotizacionId, numero, estado, isEditing, isEditable,
+    guardar, emitir, anular, confirmarVigenciaCotizacion, convertir,
     updateCliente, updateField, addLinea, updateLinea, removeLinea,
   };
 }
