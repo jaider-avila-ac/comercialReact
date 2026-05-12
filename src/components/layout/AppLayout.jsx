@@ -2,6 +2,8 @@ import { useState, useCallback, useEffect } from "react";
 import { Outlet, Navigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useInactivity } from "../../hooks/useInactivity";
+import { useSessionPing } from "../../hooks/useSessionPing";
+import { useLogoCheck } from "../../hooks/useLogoCheck";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 
@@ -11,6 +13,8 @@ export default function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useInactivity(useCallback(() => logout(), [logout]));
+  useSessionPing();
+  useLogoCheck();
 
   useEffect(() => {
     const handleResize = () => {

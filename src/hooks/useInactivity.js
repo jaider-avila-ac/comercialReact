@@ -1,20 +1,25 @@
 import { useEffect, useRef } from "react";
 
-export function useInactivity(onInactive, timeout = 30 * 60 * 1000) {
+export function useInactivity(onInactive, timeout = 10 * 60 * 1000) {
+  // Ref para siempre tener el callback más reciente sin re-lanzar el efecto
+  const onInactiveRef = useRef(onInactive);
+  useEffect(() => { onInactiveRef.current = onInactive; }, [onInactive]);
+
   const timerRef = useRef();
 
-  const resetTimer = () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => onInactive(), timeout);
-  };
-
   useEffect(() => {
-    const events = ["mousemove", "keydown", "click", "scroll"];
-    resetTimer();
-    events.forEach(event => window.addEventListener(event, resetTimer));
-    return () => {
-      events.forEach(event => window.removeEventListener(event, resetTimer));
-      if (timerRef.current) clearTimeout(timerRef.current);
+    const resetTimer = () => {
+      clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => onInactiveRef.current(), timeout);
     };
-  }, [onInactive, timeout]);
+
+    const events = ["mousemove", "mousedown", "keydown", "click", "scroll", "touchstart"];
+    resetTimer();
+    events.forEach(e => window.addEventListener(e, resetTimer, { passive: true }));
+
+    return () => {
+      events.forEach(e => window.removeEventListener(e, resetTimer));
+      clearTimeout(timerRef.current);
+    };
+  }, [timeout]);
 }

@@ -1,4 +1,4 @@
-import { apiFetch, csrfCookie } from "./api";
+import { apiFetch, csrfCookie, uploadWithProgress } from "./api";
 
 export async function listarClientes({ search = "", page = 1, perPage = 10 } = {}) {
   const qs = new URLSearchParams();
@@ -33,6 +33,10 @@ export async function actualizarCliente(id, data) {
     body: JSON.stringify(data),
   });
   return res.json();
+}
+
+export function importarClientes(file, { onUploadProgress, onProcessing } = {}) {
+  return uploadWithProgress("/clientes/importar", file, { onUploadProgress, onProcessing });
 }
 
 export async function eliminarCliente(id) {

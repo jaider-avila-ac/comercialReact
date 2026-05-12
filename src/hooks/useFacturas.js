@@ -1,31 +1,45 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { listarFacturas, emitirFactura, anularFactura } from "../services/facturas.service";
 import { showToast, showConfirm } from "../utils/notifications";
+import { getCached, setCached } from "../utils/pageCache";
+
+const CACHE_KEY = "facturas";
+const TOTALES_VACIO = {
+  total_activas: 0,
+  total_emitidas: 0,
+  total_borrador: 0,
+  total_saldo_pendiente: 0,
+  total_pagado: 0,
+};
 
 export function useFacturas() {
-  const [facturas, setFacturas] = useState([]);
-  const [totales, setTotales] = useState({
-    total_activas: 0,
-    total_emitidas: 0,
-    total_borrador: 0,
-    total_saldo_pendiente: 0,
-    total_pagado: 0,
-  });
-  const [loading, setLoading] = useState(false);
+  const cached = getCached(CACHE_KEY);
+
+  const [facturas, setFacturas] = useState(cached?.facturas ?? []);
+  const [totales, setTotales] = useState(cached?.totales ?? TOTALES_VACIO);
+  // Solo muestra skeleton si no hay nada en caché
+  const [loading, setLoading] = useState(!cached);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [estado, setEstado] = useState("");
   const isMountedRef = useRef(true);
+  const isFirstLoad = useRef(true);
 
-  const loadFacturas = useCallback(async () => {
+  const loadFacturas = useCallback(async (silent = false) => {
     if (!isMountedRef.current) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     setError(null);
     try {
       const data = await listarFacturas({ search, estado });
       if (isMountedRef.current) {
-        setFacturas(data.data || []);
-        if (data.totales) setTotales(data.totales);
+        const newFacturas = data.data || [];
+        const newTotales = data.totales || TOTALES_VACIO;
+        setFacturas(newFacturas);
+        if (data.totales) setTotales(newTotales);
+        // Solo guardar caché en la vista sin filtros
+        if (!search && !estado) {
+          setCached(CACHE_KEY, { facturas: newFacturas, totales: newTotales });
+        }
       }
     } catch (err) {
       if (isMountedRef.current) {
@@ -39,9 +53,14 @@ export function useFacturas() {
 
   useEffect(() => {
     isMountedRef.current = true;
-    const run = async () => { await loadFacturas(); };
+    // Primera carga: silenciosa si hay caché (muestra caché + actualiza fondo)
+    // Cambios de filtro: siempre silenciosos (ya hay datos en pantalla)
+    const silent = isFirstLoad.current ? !!cached : true;
+    if (isFirstLoad.current) isFirstLoad.current = false;
+    const run = async () => { await loadFacturas(silent); };
     run();
     return () => { isMountedRef.current = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadFacturas]);
 
   const handleEmitir = useCallback(async (id) => {
@@ -53,7 +72,7 @@ export function useFacturas() {
     try {
       await emitirFactura(id);
       showToast("Factura emitida", "success");
-      await loadFacturas();
+      await loadFacturas(true);
     } catch (err) {
       showToast(err.message, "error");
     }
@@ -68,7 +87,7 @@ export function useFacturas() {
     try {
       await anularFactura(id);
       showToast("Factura anulada", "success");
-      await loadFacturas();
+      await loadFacturas(true);
     } catch (err) {
       showToast(err.message, "error");
     }
@@ -79,6 +98,6 @@ export function useFacturas() {
     search, setSearch,
     estado, setEstado,
     handleEmitir, handleAnular,
-    reload: loadFacturas,
+    reload: () => loadFacturas(true),
   };
 }

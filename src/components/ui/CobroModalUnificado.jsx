@@ -55,19 +55,27 @@ export default function CobroModalUnificado({ isOpen, onClose, onPagoOk, factura
     { key: "numero_recibo", label: "Recibo" },
     { key: "fecha", label: "Fecha" },
     { key: "forma_pago", label: "Forma" },
-    { key: "referencia", label: "Referencia" },
-    { key: "monto", label: "Monto", align: "right", render: (val) => (
-      <span className="text-green-600 font-semibold">{val}</span>
-    )},
+    { key: "registrado_por", label: "Registrado por" },
+    { key: "monto", label: "Monto", align: "right" },
   ];
 
-  const pagosData = pagos.map(p => ({
-    numero_recibo: p.numero_recibo || "—",
-    fecha: p.fecha || "—",
-    forma_pago: p.forma_pago || "—",
-    referencia: p.referencia || "—",
-    monto: formatMoney(p.monto),
-  }));
+  const nombreUsuario = (u) => {
+    if (!u) return null;
+    return u.nombre_completo || [u.nombres, u.apellidos].filter(Boolean).join(" ").trim() || null;
+  };
+
+  const pagosData = pagos.map(p => {
+    const registrador = nombreUsuario(p.usuario);
+    return {
+      numero_recibo: <span className="font-semibold text-gray-800">{p.numero_recibo || "—"}</span>,
+      fecha: p.fecha || "—",
+      forma_pago: p.forma_pago || "—",
+      registrado_por: registrador
+        ? <span className="text-xs text-gray-500">{registrador}</span>
+        : <span className="text-xs text-gray-300">—</span>,
+      monto: <span className="text-green-600 font-semibold">{formatMoney(p.monto)}</span>,
+    };
+  });
 
   const cargarHistorialPagos = async (facturaId) => {
     try {

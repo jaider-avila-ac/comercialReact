@@ -1,8 +1,14 @@
 import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useCobroFactura } from "./useCobroFactura";
 import CobroModalUnificado from "../../components/ui/CobroModalUnificado";
 
 export default function FinanzasCobroFactura() {
+  const navigate  = useNavigate();
+  const location  = useLocation();
+  // location.key === "default" significa que llegó por URL directa (sin historial interno)
+  const goBack = () => location.key !== "default" ? navigate(-1) : navigate("/dashboard");
+
   const {
     cobroInput,
     setCobroInput,
@@ -44,6 +50,15 @@ export default function FinanzasCobroFactura() {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
         {/* Header */}
         <div className="border-b border-gray-200 px-5 pt-5 pb-0">
+          <div className="flex items-center gap-3 mb-1">
+            <button
+              onClick={goBack}
+              className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              <i className="bi bi-arrow-left"></i>
+              Volver
+            </button>
+          </div>
           <h5 className="text-lg font-semibold text-gray-800 mb-0 flex items-center gap-2">
             <i className="bi bi-search text-blue-500 text-xl"></i>
             Cobro rápido de facturas

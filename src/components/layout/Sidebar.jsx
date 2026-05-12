@@ -1,50 +1,40 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
-  LayoutDashboard, 
-  Users, 
-  Package, 
+  LayoutDashboard,
+  Users,
+  Package,
   FileText,
-  Receipt, 
-  Wallet, 
-  Building2, 
-  Settings, 
+  Receipt,
+  Wallet,
+  Building2,
+  Settings,
   LogOut,
   Truck,
-  BarChart3  // 👈 Agregar icono para Reportes
+  BarChart3,
 } from "lucide-react";
 
+const ALL = ["SUPER_ADMIN", "EMPRESA_ADMIN", "OPERATIVO"];
+const ADMIN = ["SUPER_ADMIN", "EMPRESA_ADMIN"];
+
 const NAV_ITEMS = [
-  { to: "/dashboard", Icon: LayoutDashboard, label: "Dashboard", section: "Principal" },
-  { to: "/clientes", Icon: Users, label: "Clientes", section: "Ventas" },
-  { to: "/proveedores", Icon: Truck, label: "Proveedores", section: "Compras" },
-  { to: "/cotizaciones", Icon: FileText, label: "Cotizaciones", section: "Ventas" },
-  { to: "/facturas", Icon: Receipt, label: "Facturas", section: "Ventas" },
-  { to: "/finanzas", Icon: Wallet, label: "Finanzas", section: "Ventas" },
-  { to: "/reportes", Icon: BarChart3, label: "Reportes", section: "Ventas" },  // 👈 Agregar Reportes
-  { to: "/catalogo", Icon: Package, label: "Catálogo", section: "Inventario" },
-  { to: "/empresa", Icon: Building2, label: "Empresa", section: "Inventario" },
-  { to: "/ajustes/usuarios", Icon: Settings, label: "Ajustes", section: "Admin" },
+  { to: "/dashboard",         Icon: LayoutDashboard, label: "Dashboard",    section: "Principal", roles: ALL   },
+  { to: "/clientes",          Icon: Users,           label: "Clientes",     section: "Ventas",    roles: ALL   },
+  { to: "/proveedores",       Icon: Truck,           label: "Proveedores",  section: "Compras",   roles: ALL   },
+  { to: "/cotizaciones",      Icon: FileText,        label: "Cotizaciones", section: "Ventas",    roles: ALL   },
+  { to: "/facturas",          Icon: Receipt,         label: "Facturas",     section: "Ventas",    roles: ALL   },
+  { to: "/finanzas",          Icon: Wallet,          label: "Finanzas",     section: "Ventas",    roles: ADMIN },
+  { to: "/reportes",          Icon: BarChart3,       label: "Reportes",     section: "Ventas",    roles: ADMIN },
+  { to: "/catalogo",          Icon: Package,         label: "Catálogo",     section: "Inventario",roles: ALL   },
+  { to: "/empresa",           Icon: Building2,       label: "Empresa",      section: "Inventario",roles: ADMIN },
+  { to: "/ajustes/usuarios",  Icon: Settings,        label: "Ajustes",      section: "Admin",     roles: ADMIN },
 ];
 
 export default function Sidebar({ open, isMobile, onToggle, onClose }) {
   const { logout, perfil } = useAuth();
   const rol = perfil?.rol || "OPERATIVO";
 
-  const filteredItems = NAV_ITEMS.filter(item => {
-    // SUPER_ADMIN: ve todo
-    if (rol === "SUPER_ADMIN") return true;
-    
-    // EMPRESA_ADMIN: ve todo (incluye Ajustes y Empresa)
-    if (rol === "EMPRESA_ADMIN") return true;
-    
-    // OPERATIVO: ve todo EXCEPTO:
-    // - Admin (Ajustes)
-    // - Inventario (Empresa, Catálogo)
-    if (rol === "OPERATIVO" && item.section !== "Admin" && item.section !== "Inventario") return true;
-    
-    return false;
-  });
+  const filteredItems = NAV_ITEMS.filter(item => item.roles.includes(rol));
 
   const groupedItems = filteredItems.reduce((acc, item) => {
     if (!acc[item.section]) acc[item.section] = [];
@@ -52,11 +42,10 @@ export default function Sidebar({ open, isMobile, onToggle, onClose }) {
     return acc;
   }, {});
 
-  // Clases para el sidebar
   const sidebarClasses = `
-    sidebar 
-    bg-slate-800 text-white flex flex-col shadow-xl 
-    ${open ? "" : "sidebar--sm"} 
+    sidebar
+    bg-slate-800 text-white flex flex-col shadow-xl
+    ${open ? "" : "sidebar--sm"}
     ${isMobile && open ? "mobile-open" : ""}
   `;
 
@@ -71,7 +60,7 @@ export default function Sidebar({ open, isMobile, onToggle, onClose }) {
           onClick={onToggle}
           className={`p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-700 transition-colors ${!open && "mx-auto"}`}
         >
-          <i className={`bi bi-${open ? 'layout-sidebar-inset' : 'layout-sidebar'}`} style={{ fontSize: '1.125rem' }}></i>
+          <i className={`bi bi-${open ? "layout-sidebar-inset" : "layout-sidebar"}`} style={{ fontSize: "1.125rem" }}></i>
         </button>
       </div>
 

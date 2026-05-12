@@ -20,14 +20,34 @@ const TIPO_STYLES = {
   AJUSTE: "bg-yellow-100 text-yellow-700",
 };
 
+const SUBTIPO_LABELS = {
+  COMPRA_LIBRE:            "Libre",
+  COMPRA_CONTADO:          "Contado",
+  COMPRA_CREDITO:          "Crédito",
+  RETIRO_MANUAL:           "Retiro manual",
+  ANULACION_COMPRA:        "Anulación compra",
+  AJUSTE_COMPRA_AUMENTO:   "Ajuste ↑ compra",
+  AJUSTE_COMPRA_REDUCCION: "Ajuste ↓ compra",
+};
+
 const TipoBadge = ({ tipo }) => {
   const style = TIPO_STYLES[tipo] || "bg-gray-100 text-gray-700";
   return <span className={`px-2 py-1 rounded-full text-xs font-medium ${style}`}>{tipo}</span>;
 };
 
+const SubtipoBadge = ({ subtipo }) => {
+  if (!subtipo) return <span className="text-gray-400 text-xs">—</span>;
+  return (
+    <span className="px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-600 font-mono">
+      {SUBTIPO_LABELS[subtipo] ?? subtipo}
+    </span>
+  );
+};
+
 const COLUMNS = [
   { key: "fecha", label: "Fecha", sortable: true },
   { key: "tipo_badge", label: "Tipo", align: "center" },
+  { key: "subtipo_badge", label: "Subtipo", align: "center" },
   { key: "cantidad", label: "Cantidad", align: "right", sortable: true },
   { key: "saldo", label: "Saldo", align: "right", sortable: true },
   { key: "usuario", label: "Usuario" },
@@ -55,6 +75,7 @@ export default function MovimientosPage() {
   const rows = movimientos.map(m => ({
     fecha: formatDate(m.ocurrido_en),
     tipo_badge: <TipoBadge tipo={m.tipo} />,
+    subtipo_badge: <SubtipoBadge subtipo={m.subtipo} />,
     cantidad: formatNumber(m.cantidad),
     saldo: formatNumber(m.saldo_resultante),
     usuario: [m.usuario_nombres, m.usuario_apellidos].filter(Boolean).join(" ") || m.usuario_email || `ID ${m.usuario_id}`,

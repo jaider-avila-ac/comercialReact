@@ -2,27 +2,12 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Pencil, Eye, Send, XCircle, Search, DollarSign } from "lucide-react";
 import { IconButton } from "../../components/ui/IconButton";
-import DataTable from "../../components/ui/DataTable";
+import FacturasTable from "../../components/ui/FacturasTable";
 import KpiCard from "../../components/ui/KpiCard";
 import CobroModalUnificado from "../../components/ui/CobroModalUnificado";
 import { useFacturas } from "../../hooks/useFacturas";
 import { formatMoney, formatNumber } from "../../services/dashboard.service";
 
-const COLUMNS = [
-  { key: "numero", label: "Número", sortable: true },
-  { key: "cliente_nombre", label: "Cliente", sortable: true },
-  { key: "estado_badge", label: "Estado", sortable: true },
-  { key: "fecha", label: "Fecha", sortable: true },
-  { key: "total_formateado", label: "Total", sortable: true, align: "right" },
-  { key: "pagado_formateado", label: "Valor pagado", sortable: true, align: "right" },
-  { key: "saldo_formateado", label: "Saldo pendiente", sortable: true, align: "right" },
-];
-
-const ESTADO_STYLES = {
-  BORRADOR: "bg-gray-100 text-gray-600",
-  EMITIDA: "bg-emerald-100 text-emerald-600",
-  ANULADA: "bg-red-100 text-red-600",
-};
 
 export default function FacturasPage() {
   const {
@@ -37,11 +22,8 @@ export default function FacturasPage() {
   const [facturaSeleccionada, setFacturaSeleccionada] = useState(null);
 
   const handleCobrar = (row) => {
-    const factura = facturas.find(f => f.id === row.id);
-    if (factura) {
-      setFacturaSeleccionada(factura);
-      setModalOpen(true);
-    }
+    setFacturaSeleccionada(row._raw);
+    setModalOpen(true);
   };
 
   const handlePagoOk = () => {
@@ -49,44 +31,6 @@ export default function FacturasPage() {
     setFacturaSeleccionada(null);
     reload();
   };
-
-  const renderEstado = (e) => (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium ${ESTADO_STYLES[e] || ESTADO_STYLES.BORRADOR}`}>
-      {e}
-    </span>
-  );
-
-  const rows = facturas.map(f => ({
-    id: f.id,
-    numero: f.estado === "BORRADOR" ? (
-      <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Borrador</span>
-    ) : f.estado === "ANULADA" && !f.numero ? (
-      <span className="text-xs font-medium text-red-400 uppercase tracking-wide">Anulada</span>
-    ) : (
-      <span className="font-mono font-medium text-blue-600">{f.numero || `#${f.id}`}</span>
-    ),
-    cliente_nombre: <div className="font-semibold text-gray-800">{f.cliente?.nombre_razon_social || "—"}</div>,
-    estado_badge: renderEstado(f.estado),
-    fecha: f.fecha?.substring(0, 10) || "—",
-    total_formateado: <span className="font-semibold text-gray-900">{formatMoney(f.total)}</span>,
-    pagado_formateado: f.estado === "ANULADA" ? (
-      <span className="text-xs text-gray-400">—</span>
-    ) : (f.total_pagado || 0) > 0 ? (
-      <span className="font-semibold text-emerald-600">{formatMoney(f.total_pagado)}</span>
-    ) : (
-      <span className="text-xs text-gray-400">$0</span>
-    ),
-    saldo_formateado: f.estado === "ANULADA" ? (
-      <span className="text-xs text-gray-400">—</span>
-    ) : (f.saldo || 0) > 0 ? (
-      <span className="font-semibold text-amber-600">{formatMoney(f.saldo)}</span>
-    ) : (
-      <span className="text-xs text-emerald-600 font-medium">Pagada</span>
-    ),
-    estado_raw: f.estado,
-    numero_raw: f.numero,
-    saldo_raw: parseFloat(f.saldo) || 0,
-  }));
 
   const renderAcciones = (row) => {
     const isBorrador = row.estado_raw === "BORRADOR";
@@ -169,15 +113,17 @@ export default function FacturasPage() {
           color="white"
           iconColor="blue"
           to="/facturas"
+          loading={loading}
         />
         <KpiCard
           title="Por cobrar"
           value={formatMoney(totales.total_saldo_pendiente)}
-          subtitle="Saldo pendiente en facturas emitidas"
+          subtitle="Saldo pendiente en facturas"
           iconClass="bi bi-hourglass-split"
           color="white"
           iconColor="red"
           to="/finanzas/pendientes"
+          loading={loading}
         />
         <KpiCard
           title="Ya cobrado"
@@ -187,6 +133,7 @@ export default function FacturasPage() {
           color="white"
           iconColor="emerald"
           to="/finanzas/ingresos"
+          loading={loading}
         />
       </div>
 
@@ -218,13 +165,11 @@ export default function FacturasPage() {
 
       <div className="bg-white rounded-xl border border-gray-200" style={{ height: 600 }}>
         <div className="p-3 flex flex-col h-full">
-          <DataTable
-            columns={COLUMNS}
-            rows={rows}
+          <FacturasTable
+            facturas={facturas}
             actions={renderAcciones}
             loading={loading}
             empty="No hay facturas registradas."
-            defaultSort={{ key: "fecha", dir: "desc" }}
             pageSize={10}
           />
         </div>

@@ -29,8 +29,14 @@ const HISTORIAL_COLUMNS = [
   { key: "valor_unitario", label: "V. Unit.", align: "right" },
   { key: "forma_pago_badge", label: "Pago", align: "center" },
   { key: "total", label: "Total", align: "right" },
+  { key: "vendedor", label: "Vendedor" },
   { key: "acciones", label: "", align: "center" },
 ];
+
+const nombreUsuario = (u) => {
+  if (!u) return null;
+  return u.nombre_completo || [u.nombres, u.apellidos].filter(Boolean).join(" ").trim() || null;
+};
 
 export default function VentaRapidaPage() {
   const navigate = useNavigate();
@@ -152,13 +158,19 @@ export default function VentaRapidaPage() {
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
-  const historialRows = historial.map(h => ({
+  const historialRows = historial.map(h => {
+    const creador  = nombreUsuario(h.usuario);
+    const anulador = nombreUsuario(h.anulado_por);
+    return {
     item: (
       <div>
         <div className="font-semibold text-sm">{h.item_nombre || "—"}</div>
         <div className="text-xs text-gray-400">{h.numero_recibo}</div>
         {h.estado === "ANULADO" && (
-          <span className="text-xs text-red-500 font-medium">ANULADO</span>
+          <div className="flex flex-col gap-0.5 mt-0.5">
+            <span className="text-xs text-red-500 font-medium">ANULADO</span>
+            {anulador && <span className="text-xs text-gray-400">por: {anulador}</span>}
+          </div>
         )}
       </div>
     ),
@@ -174,6 +186,9 @@ export default function VentaRapidaPage() {
         {formatMoney(h.total_pagado)}
       </span>
     ),
+    vendedor: creador
+      ? <span className="text-xs text-gray-500 leading-tight">{creador}</span>
+      : <span className="text-xs text-gray-300">—</span>,
     acciones: h.estado !== "ANULADO" ? (
       <IconButton
         icon={Ban}
@@ -186,7 +201,7 @@ export default function VentaRapidaPage() {
         }}
       />
     ) : null,
-  }));
+  };});
 
   return (
     <div className="p-4">

@@ -4,6 +4,7 @@ import { IconButton } from "../../components/ui/IconButton";
 import DataTable from "../../components/ui/DataTable";
 import { Pagination } from "../../components/ui/DataTable/Pagination";
 import { useCatalogo } from "./useCatalogo";
+import { useAuth } from "../../context/AuthContext";
 
 const TIPOS = [
   { value: "", label: "Todos" },
@@ -28,6 +29,9 @@ const COLUMNS = [
 ];
 
 export default function CatalogoPage() {
+  const { perfil } = useAuth();
+  const isAdmin = ["SUPER_ADMIN", "EMPRESA_ADMIN"].includes(perfil?.rol);
+
   const {
     items,
     loading,
@@ -74,7 +78,7 @@ export default function CatalogoPage() {
     nombre: (
       <div>
         <div className="font-semibold text-gray-800">{item.nombre || "—"}</div>
-        {item.descripcion && <div className="text-xs text-gray-400 truncate max-w-[200px]">{item.descripcion}</div>}
+        {item.descripcion && <div className="text-xs text-gray-400 truncate max-w-50">{item.descripcion}</div>}
       </div>
     ),
     tipo_badge: renderTipo(item.tipo),
@@ -88,19 +92,19 @@ export default function CatalogoPage() {
     handleDelete(row.id, row.nombre.props.children[0]?.props?.children || "item");
   };
 
-  const renderAcciones = (row) => (
+  const renderAcciones = isAdmin ? (row) => (
     <div className="flex items-center gap-1">
       <Link to={`/catalogo/editar/${row.id}`}>
         <IconButton icon={Pencil} title="Editar" variant="warning" />
       </Link>
-      <IconButton 
-        icon={Trash2} 
-        title="Eliminar" 
-        variant="danger" 
-        onClick={() => onDelete(row)} 
+      <IconButton
+        icon={Trash2}
+        title="Eliminar"
+        variant="danger"
+        onClick={() => onDelete(row)}
       />
     </div>
-  );
+  ) : null;
 
   const startItem = pagination.total > 0 ? (pagination.currentPage - 1) * pagination.perPage + 1 : 0;
   const endItem = Math.min(pagination.currentPage * pagination.perPage, pagination.total);
@@ -127,26 +131,28 @@ export default function CatalogoPage() {
           <h2 className="text-xl font-bold text-gray-800">Catálogo</h2>
           <p className="text-sm text-gray-400">Gestión de productos, servicios e insumos</p>
         </div>
-        <div className="flex gap-3">
-          <Link
-            to="/compras"
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
-          >
-            <ShoppingCart size={18} /> Compras
-          </Link>
-          <Link
-            to="/inventario/movimientos"
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
-          >
-            <History size={18} /> Movimientos
-          </Link>
-          <Link
-            to="/catalogo/nuevo"
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-          >
-            <Plus size={18} /> Nuevo item
-          </Link>
-        </div>
+        {isAdmin && (
+          <div className="flex gap-3">
+            <Link
+              to="/compras"
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
+            >
+              <ShoppingCart size={18} /> Compras
+            </Link>
+            <Link
+              to="/inventario/movimientos"
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
+            >
+              <History size={18} /> Movimientos
+            </Link>
+            <Link
+              to="/catalogo/nuevo"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            >
+              <Plus size={18} /> Nuevo item
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Filtros */}

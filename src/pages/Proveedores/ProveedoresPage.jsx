@@ -1,9 +1,14 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Pencil, Trash2, Search } from "lucide-react";
 import { IconButton } from "../../components/ui/IconButton";
 import DataTable from "../../components/ui/DataTable";
 import { Pagination } from "../../components/ui/DataTable/Pagination";
+import ImportDropdownButton from "../../components/ui/ImportDropdownButton";
+import ImportProgressModal from "../../utils/ImportProgressModal";
 import { useProveedores } from "./useProveedores";
+import { importarProveedores } from "../../services/proveedores.service";
+import { descargarPlantillaProveedores } from "../../utils/xlsxTemplate";
 
 const COLUMNS = [
   { key: "nombre", label: "Nombre", sortable: true },
@@ -17,24 +22,18 @@ const COLUMNS = [
 const ESTADO_STYLES = {
   true: "bg-green-100 text-green-700",
   false: "bg-red-100 text-red-700",
-  1: "bg-green-100 text-green-700",
-  0: "bg-red-100 text-red-700",
 };
+
+const IMPORT_INITIAL = { phase: "idle", file: null, progress: 0, successCount: 0, errors: [] };
 
 export default function ProveedoresPage() {
   const {
-    proveedores,
-    loading,
-    error,
-    pagination,
-    search,
-    setSearch,
-    activos,
-    setActivos,
-    handleDelete,
-    changePage,
-    reload,
+    proveedores, loading, error, pagination,
+    search, setSearch, activos, setActivos,
+    handleDelete, changePage, reload,
   } = useProveedores();
+
+  const [importState, setImportState] = useState(IMPORT_INITIAL);
 
   const renderEstado = (activo) => {
     const isActivo = activo === true || activo === 1 || activo === "1";
@@ -45,10 +44,30 @@ export default function ProveedoresPage() {
     );
   };
 
-  // ✅ Simplificado: solo pasamos el id y el nombre para el mensaje
-  const onDelete = (row) => {
-    handleDelete(row.id, row.nombre);
+  const onDelete = (row) => handleDelete(row.id, row.nombre);
+
+  const handleFileSelected = (file) => {
+    setImportState({ ...IMPORT_INITIAL, phase: "selected", file });
   };
+
+  const handleImportConfirm = async (file) => {
+    setImportState(s => ({ ...s, phase: "uploading", progress: 0 }));
+    try {
+      const result = await importarProveedores(file, {
+        onUploadProgress: (pct) => setImportState(s => ({ ...s, progress: pct })),
+        onProcessing: () => setImportState(s => ({ ...s, phase: "processing" })),
+      });
+      setImportState(s => ({ ...s, phase: "success", successCount: result.importados }));
+      reload();
+    } catch (err) {
+      setImportState(s => ({ ...s, phase: "error", errors: err?.data?.errores || [] }));
+    }
+  };
+
+  const handleImportClose = () => setImportState(IMPORT_INITIAL);
+
+  const startItem = pagination.total > 0 ? (pagination.currentPage - 1) * pagination.perPage + 1 : 0;
+  const endItem = Math.min(pagination.currentPage * pagination.perPage, pagination.total);
 
   const rows = proveedores.map(p => ({
     id: p.id,
@@ -58,7 +77,6 @@ export default function ProveedoresPage() {
     telefono: p.telefono || "—",
     email: p.email || "—",
     estado_badge: renderEstado(p.is_activo ?? p.activo ?? true),
-    // Guardamos el nombre como string plano para usarlo en la acción
     nombre_plain: p.nombre || "—",
   }));
 
@@ -67,32 +85,23 @@ export default function ProveedoresPage() {
       <Link to={`/proveedores/editar/${row.id}`}>
         <IconButton icon={Pencil} title="Editar" variant="warning" />
       </Link>
-      <IconButton 
-        icon={Trash2} 
-        title="Eliminar" 
-        variant="danger" 
-        onClick={() => onDelete({ id: row.id, nombre: row.nombre_plain })} 
+      <IconButton
+        icon={Trash2}
+        title="Eliminar"
+        variant="danger"
+        onClick={() => onDelete({ id: row.id, nombre: row.nombre_plain })}
       />
     </div>
   );
 
-  // Calcular rango de registros mostrados
-  const startItem = pagination.total > 0 ? (pagination.currentPage - 1) * pagination.perPage + 1 : 0;
-  const endItem = Math.min(pagination.currentPage * pagination.perPage, pagination.total);
-
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <div className="text-center text-red-500">
-          <svg className="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <p className="text-lg font-semibold mt-2">Error al cargar proveedores</p>
-          <p className="text-sm text-gray-500">{error}</p>
-          <button onClick={reload} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-            Reintentar
-          </button>
-        </div>
+      <div className="flex flex-col items-center justify-center py-12 text-center text-red-500">
+        <p className="text-lg font-semibold mt-2">Error al cargar proveedores</p>
+        <p className="text-sm text-gray-500">{error}</p>
+        <button onClick={reload} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+          Reintentar
+        </button>
       </div>
     );
   }
@@ -104,15 +113,21 @@ export default function ProveedoresPage() {
           <h2 className="text-xl font-bold text-gray-800">Proveedores</h2>
           <p className="text-sm text-gray-400">Gestión de proveedores del sistema</p>
         </div>
-        <Link
-          to="/proveedores/nuevo"
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-        >
-          <Plus size={18} /> Nuevo proveedor
-        </Link>
+        <div className="flex items-center gap-2">
+          <ImportDropdownButton
+            label="Importar"
+            onImport={handleFileSelected}
+            onDownloadTemplate={descargarPlantillaProveedores}
+          />
+          <Link
+            to="/proveedores/nuevo"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
+            <Plus size={18} /> Nuevo proveedor
+          </Link>
+        </div>
       </div>
 
-      {/* Filtros */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="md:col-span-2 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -138,7 +153,6 @@ export default function ProveedoresPage() {
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        {/* Tabla */}
         <div className="overflow-auto" style={{ height: 500 }}>
           <DataTable
             columns={COLUMNS}
@@ -151,8 +165,6 @@ export default function ProveedoresPage() {
             hidePagination={true}
           />
         </div>
-        
-        {/* Paginación */}
         {pagination.total > 0 && (
           <div className="border-t border-gray-200 bg-gray-50 px-4 py-3">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
@@ -170,6 +182,19 @@ export default function ProveedoresPage() {
           </div>
         )}
       </div>
+
+      <ImportProgressModal
+        isOpen={importState.phase !== "idle"}
+        onClose={handleImportClose}
+        phase={importState.phase}
+        file={importState.file}
+        progress={importState.progress}
+        successCount={importState.successCount}
+        errors={importState.errors}
+        onConfirm={handleImportConfirm}
+        onFileChange={handleFileSelected}
+        entityName="proveedores"
+      />
     </div>
   );
 }

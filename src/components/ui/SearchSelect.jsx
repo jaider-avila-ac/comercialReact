@@ -90,7 +90,11 @@ export default function SearchSelect({
 
   useEffect(() => {
     if (!open) return;
-    const handler = () => setOpen(false);
+    const handler = (e) => {
+      // Don't close if scrolling within the dropdown itself
+      if (dropdownRef.current?.contains(e.target)) return;
+      setOpen(false);
+    };
     window.addEventListener("scroll", handler, true);
     return () => window.removeEventListener("scroll", handler, true);
   }, [open]);

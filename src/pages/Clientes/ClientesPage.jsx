@@ -1,11 +1,16 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus,  Pencil, Trash2, Search, Receipt } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Receipt } from "lucide-react";
 import { IconButton } from "../../components/ui/IconButton";
 import DataTable from "../../components/ui/DataTable";
 import { Pagination } from "../../components/ui/DataTable/Pagination";
+import ImportDropdownButton from "../../components/ui/ImportDropdownButton";
+import ImportProgressModal from "../../utils/ImportProgressModal";
 import { useClientes } from "./useClientes";
 import { showConfirm, showToast } from "../../utils/notifications";
 import { formatMoney } from "../../services/dashboard.service";
+import { importarClientes } from "../../services/clientes.service";
+import { descargarPlantillaClientes } from "../../utils/xlsxTemplate";
 
 const COLUMNS = [
   { key: "nombre_completo", label: "Cliente", sortable: true },
@@ -15,24 +20,19 @@ const COLUMNS = [
   { key: "saldo_formateado", label: "Saldo a favor", sortable: true, align: "right" },
 ];
 
+const IMPORT_INITIAL = { phase: "idle", file: null, progress: 0, successCount: 0, errors: [] };
+
 export default function ClientesPage() {
-  const { 
-    clientes, 
-    loading, 
-    error, 
-    pagination,
-    search,
-    setSearch,
-    handleDelete, 
-    changePage,
-    reload 
+  const {
+    clientes, loading, error, pagination,
+    search, setSearch, handleDelete, changePage, reload,
   } = useClientes();
+
+  const [importState, setImportState] = useState(IMPORT_INITIAL);
 
   const formatSaldo = (saldo) => {
     const saldoNum = saldo || 0;
-    if (saldoNum > 0) {
-      return <span className="text-emerald-600 font-semibold">{formatMoney(saldoNum)}</span>;
-    }
+    if (saldoNum > 0) return <span className="text-emerald-600 font-semibold">{formatMoney(saldoNum)}</span>;
     return <span className="text-gray-400">—</span>;
   };
 
@@ -43,11 +43,29 @@ export default function ClientesPage() {
     );
     if (confirmed) {
       const result = await handleDelete(row.id, row.nombre_razon_social);
-      if (result.success) {
-        showToast("Cliente eliminado correctamente", "success");
-      }
+      if (result.success) showToast("Cliente eliminado correctamente", "success");
     }
   };
+
+  const handleFileSelected = (file) => {
+    setImportState({ ...IMPORT_INITIAL, phase: "selected", file });
+  };
+
+  const handleImportConfirm = async (file) => {
+    setImportState(s => ({ ...s, phase: "uploading", progress: 0 }));
+    try {
+      const result = await importarClientes(file, {
+        onUploadProgress: (pct) => setImportState(s => ({ ...s, progress: pct })),
+        onProcessing: () => setImportState(s => ({ ...s, phase: "processing" })),
+      });
+      setImportState(s => ({ ...s, phase: "success", successCount: result.importados }));
+      reload();
+    } catch (err) {
+      setImportState(s => ({ ...s, phase: "error", errors: err?.data?.errores || [] }));
+    }
+  };
+
+  const handleImportClose = () => setImportState(IMPORT_INITIAL);
 
   const rows = clientes.map(c => ({
     id: c.id,
@@ -57,9 +75,7 @@ export default function ClientesPage() {
         {c.empresa && <div className="text-xs text-gray-400">{c.nombre_razon_social}</div>}
       </div>
     ),
-    documento: c.tipo_documento && c.num_documento 
-      ? `${c.tipo_documento} ${c.num_documento}`
-      : "—",
+    documento: c.tipo_documento && c.num_documento ? `${c.tipo_documento} ${c.num_documento}` : "—",
     telefono: c.telefono || "—",
     email: c.email || "—",
     saldo_formateado: formatSaldo(c.saldo_a_favor),
@@ -67,38 +83,30 @@ export default function ClientesPage() {
   }));
 
   const renderAcciones = (row) => (
-  <div className="flex items-center gap-1">
-    <Link to={`/clientes/facturas/${row.id}`}>
-      <IconButton icon={Receipt} title="Ver facturas" variant="info" />
-    </Link>
-    <Link to={`/clientes/editar/${row.id}`}>
-      <IconButton icon={Pencil} title="Editar" variant="warning" />
-    </Link>
-    <IconButton 
-      icon={Trash2} 
-      title="Eliminar" 
-      variant="danger"
-      onClick={() => onDelete({ id: row.id, nombre_razon_social: row.nombre_razon_social })} 
-    />
-  </div>
-);
+    <div className="flex items-center gap-1">
+      <Link to={`/clientes/facturas/${row.id}`}>
+        <IconButton icon={Receipt} title="Ver facturas" variant="info" />
+      </Link>
+      <Link to={`/clientes/editar/${row.id}`}>
+        <IconButton icon={Pencil} title="Editar" variant="warning" />
+      </Link>
+      <IconButton
+        icon={Trash2}
+        title="Eliminar"
+        variant="danger"
+        onClick={() => onDelete({ id: row.id, nombre_razon_social: row.nombre_razon_social })}
+      />
+    </div>
+  );
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <div className="text-center text-red-500">
-          <svg className="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <p className="text-lg font-semibold mt-2">Error al cargar clientes</p>
-          <p className="text-sm text-gray-500">{error}</p>
-          <button onClick={reload} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 mx-auto">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            Reintentar
-          </button>
-        </div>
+      <div className="flex flex-col items-center justify-center py-12 text-center text-red-500">
+        <p className="text-lg font-semibold mt-2">Error al cargar clientes</p>
+        <p className="text-sm text-gray-500">{error}</p>
+        <button onClick={reload} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+          Reintentar
+        </button>
       </div>
     );
   }
@@ -110,15 +118,21 @@ export default function ClientesPage() {
           <h2 className="text-xl font-bold text-gray-800">Clientes</h2>
           <p className="text-sm text-gray-400">Gestión de clientes del sistema</p>
         </div>
-        <Link
-          to="/clientes/nuevo"
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-        >
-          <Plus size={18} /> Nuevo cliente
-        </Link>
+        <div className="flex items-center gap-2">
+          <ImportDropdownButton
+            label="Importar"
+            onImport={handleFileSelected}
+            onDownloadTemplate={descargarPlantillaClientes}
+          />
+          <Link
+            to="/clientes/nuevo"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
+            <Plus size={18} /> Nuevo cliente
+          </Link>
+        </div>
       </div>
 
-      {/* Barra de búsqueda */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
@@ -131,7 +145,6 @@ export default function ClientesPage() {
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        {/* Tabla - altura fija con scroll */}
         <div className="overflow-auto" style={{ height: 500 }}>
           <DataTable
             columns={COLUMNS}
@@ -145,8 +158,6 @@ export default function ClientesPage() {
             hidePagination={true}
           />
         </div>
-        
-        {/* Paginación - SIEMPRE visible, fuera del área de carga */}
         <div className="border-t border-gray-200 bg-gray-50 px-4 py-3">
           {pagination.total > 0 && (
             <Pagination
@@ -159,6 +170,19 @@ export default function ClientesPage() {
           )}
         </div>
       </div>
+
+      <ImportProgressModal
+        isOpen={importState.phase !== "idle"}
+        onClose={handleImportClose}
+        phase={importState.phase}
+        file={importState.file}
+        progress={importState.progress}
+        successCount={importState.successCount}
+        errors={importState.errors}
+        onConfirm={handleImportConfirm}
+        onFileChange={handleFileSelected}
+        entityName="clientes"
+      />
     </div>
   );
 }

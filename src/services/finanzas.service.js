@@ -63,7 +63,6 @@ export async function anularFactura(id) {
 export async function facturasPendientes({ search = "" } = {}) {
   const qs = new URLSearchParams();
   if (search) qs.set("search", search);
-  qs.set("estado", "EMITIDA");
   qs.set("pendiente", "true");
 
   const res = await apiFetch(`/facturas?${qs}`);

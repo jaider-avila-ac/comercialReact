@@ -19,11 +19,15 @@ export async function obtenerDashboard() {
         total_items: resumen.total_items || 0,
         cotizaciones_activas: resumen.cotizaciones_activas || 0,
         facturas_borrador: resumen.facturas_borrador || 0,
+        facturas_emitidas: resumen.facturas_emitidas || 0,
         total_en_caja: resumen.total_en_caja || 0,
+        balance_real: resumen.balance_real || 0,
         saldo_pendiente: resumen.saldo_pendiente || 0,
+        total_pagado: resumen.total_pagado || 0,
+        ingresos_hoy: resumen.ingresos_hoy || 0,
       },
       ultimasFacturas,
-      ultimosPagos
+      ultimosPagos,
     };
   } catch (error) {
     console.error("Error obtener dashboard:", error);

@@ -1,6 +1,6 @@
 // src/pages/Finanzas/IngresosPage.jsx
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { ArrowLeft, RefreshCw, Plus } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import DataTable from "../../components/ui/DataTable";
@@ -10,6 +10,9 @@ import IngresosModal from "./IngresosModal";
 import { showConfirm } from "../../utils/notifications";
 
 export default function IngresosPage() {
+  const location = useLocation();
+  const initialTipo = location.state?.tipo ?? "";
+
   const {
     ingresos,
     loading,
@@ -22,7 +25,7 @@ export default function IngresosPage() {
     cambiarPagina,
     anularIngreso,
     formatDate,
-  } = useIngresos();
+  } = useIngresos(initialTipo);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [ingresoSeleccionado, setIngresoSeleccionado] = useState(null);
@@ -55,10 +58,17 @@ export default function IngresosPage() {
     }
   };
 
+  const nombreUsuario = (u) => {
+    if (!u) return null;
+    return u.nombre_completo || [u.nombres, u.apellidos].filter(Boolean).join(" ").trim() || null;
+  };
+
   const columns = [
     { key: "recibo", label: "Recibo", sortable: true },
     { key: "fecha_formatted", label: "Fecha", sortable: true },
     { key: "tipo_label", label: "Tipo", sortable: true },
+    { key: "estado", label: "Estado" },
+    { key: "vendedor", label: "Vendedor", sortable: false },
     { key: "forma_pago", label: "Forma pago" },
     { key: "referencia", label: "Referencia" },
     { key: "monto_formatted", label: "Monto", align: "right", sortable: true },
@@ -99,43 +109,55 @@ export default function IngresosPage() {
     );
   };
 
-  const rows = ingresos.map(i => ({
+  const rows = ingresos.map(i => {
+    const anulador = nombreUsuario(i.anulado_por);
+    const creador  = nombreUsuario(i.usuario);
+    return {
     id: i.id,
     recibo: <span className="font-semibold text-gray-800">{i.recibo}</span>,
     fecha_formatted: <span className="text-gray-600 text-sm whitespace-nowrap">{i.fecha_formatted}</span>,
     tipo_label: (
       <div>
         <div className="font-medium text-gray-800">{i.tipo_label}</div>
-        <div className="mt-1">
-          {i.estado === "ANULADO" ? (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 border border-red-200">
-              ANULADO
-            </span>
-          ) : (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
-              ACTIVO
-            </span>
-          )}
-        </div>
-        {i.cliente_nombre && (
-          <div className="text-xs text-gray-500 mt-1">{i.cliente_nombre}</div>
+        {i.descripcion && i.tipo !== "VENTA_MOSTRADOR" && (
+          <div className="text-xs text-gray-500 mt-0.5 truncate max-w-40" title={i.descripcion}>
+            {i.descripcion}
+          </div>
+        )}
+        {i.cliente_nombre && i.tipo !== "INGRESO_MANUAL" && (
+          <div className="text-xs text-gray-400 mt-0.5 truncate max-w-40" title={i.cliente_nombre}>
+            {i.cliente_nombre}
+          </div>
         )}
       </div>
     ),
+    estado: i.estado === "ANULADO" ? (
+      <div className="flex flex-col gap-0.5">
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 border border-red-200">
+          ANULADO
+        </span>
+        {anulador && <span className="text-xs text-gray-400">por: {anulador}</span>}
+      </div>
+    ) : (
+      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
+        ACTIVO
+      </span>
+    ),
+    vendedor: creador
+      ? <span className="text-xs text-gray-500 leading-tight">{creador}</span>
+      : null,
     forma_pago: <span className="text-gray-600 text-sm">{i.forma_pago}</span>,
-    referencia: i.referencia !== "—" ? (
-      <span className="text-gray-500 text-sm truncate max-w-[120px] block" title={i.referencia}>
+    referencia: i.referencia && i.referencia !== "—" ? (
+      <span className="text-gray-500 text-sm truncate max-w-30 block" title={i.referencia}>
         {i.referencia}
       </span>
-    ) : (
-      <span className="text-gray-400 text-sm">—</span>
-    ),
+    ) : null,
     monto_formatted: i.estado === "ANULADO" ? (
       <span className="text-gray-400 line-through">{i.monto_formatted}</span>
     ) : (
       <span className="text-green-600 font-semibold">{i.monto_formatted}</span>
     ),
-  }));
+  };});
 
   const footerTotales = (
     <div className="border-t border-gray-200 bg-gray-50 px-4 py-2">
@@ -145,7 +167,7 @@ export default function IngresosPage() {
         </div>
         <div className="flex gap-2 items-center">
           <span className="text-gray-500">Total ingresos →</span>
-          <span className="text-green-600 font-semibold min-w-[130px] text-right">
+          <span className="text-green-600 font-semibold min-w-32.5 text-right">
             {totalFormatted}
           </span>
         </div>

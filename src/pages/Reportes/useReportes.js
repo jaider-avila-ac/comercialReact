@@ -1,6 +1,9 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { getReporteKPIs, getRendimientoItems } from "../../services/reportes.service";
 import { showToast } from "../../utils/notifications";
+import { getCached, setCached } from "../../utils/pageCache";
+
+const CACHE_KEY = "reportes";
 
 const getDefaultFiltros = () => {
   const hoy = new Date();
@@ -18,30 +21,38 @@ const KPIS_VACIO = {
 };
 
 export function useReportes() {
-  const [loading, setLoading] = useState(false);
-  const [kpis, setKpis] = useState(KPIS_VACIO);
-  const [items, setItems] = useState([]);
+  const cached = getCached(CACHE_KEY);
+
+  const [loading, setLoading] = useState(!cached);
+  const [refreshing, setRefreshing] = useState(false);
+  const [kpis, setKpis] = useState(cached?.kpis ?? KPIS_VACIO);
+  const [items, setItems] = useState(cached?.items ?? []);
   const [filtros, setFiltros] = useState(getDefaultFiltros);
   const mountedRef = useRef(true);
+  const isFirstLoad = useRef(true);
 
   useEffect(() => {
     mountedRef.current = true;
     return () => { mountedRef.current = false; };
   }, []);
 
-  const loadReporte = useCallback((desde, hasta) => {
+  const loadReporte = useCallback((desde, hasta, silent = false) => {
     if (!desde || !hasta) {
       showToast("Seleccione fecha desde y hasta", "warning");
       return;
     }
-    setLoading(true);
+    if (silent) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     Promise.all([
       getReporteKPIs({ desde, hasta }),
       getRendimientoItems({ desde, hasta }),
     ])
       .then(([kpisData, rendData]) => {
         if (!mountedRef.current) return;
-        setKpis({
+        const nextKpis = {
           total_facturado:    kpisData.total_facturado    || 0,
           total_cobrado:      kpisData.total_cobrado      || 0,
           saldo_pendiente:    kpisData.saldo_pendiente    || 0,
@@ -55,35 +66,45 @@ export function useReportes() {
           compras_contado:    kpisData.compras_contado    || 0,
           credito_pendiente:  kpisData.credito_pendiente  || 0,
           balance_real:       kpisData.balance_real       || 0,
-        });
-        setItems(rendData.rendimiento_items || []);
+        };
+        const nextItems = rendData.rendimiento_items || [];
+        setKpis(nextKpis);
+        setItems(nextItems);
+        setCached(CACHE_KEY, { kpis: nextKpis, items: nextItems });
       })
       .catch(err => {
         if (!mountedRef.current) return;
         showToast(err.message || "Error al cargar el reporte", "error");
       })
       .finally(() => {
-        if (mountedRef.current) setLoading(false);
+        if (!mountedRef.current) return;
+        setLoading(false);
+        setRefreshing(false);
       });
   }, []);
 
-  // Carga inicial con las fechas por defecto
   useEffect(() => {
-    const { desde, hasta } = getDefaultFiltros();
-    loadReporte(desde, hasta);
+    const { desde, hasta } = filtros;
+    if (isFirstLoad.current) {
+      isFirstLoad.current = false;
+      loadReporte(desde, hasta, !!cached);
+    } else {
+      loadReporte(desde, hasta, true);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [filtros]);
 
   const actualizarFiltros = useCallback((nuevos) => {
     setFiltros(prev => ({ ...prev, ...nuevos }));
   }, []);
 
   const generarReporte = useCallback(() => {
-    loadReporte(filtros.desde, filtros.hasta);
+    loadReporte(filtros.desde, filtros.hasta, true);
   }, [loadReporte, filtros]);
 
   return {
     loading,
+    refreshing,
     kpis,
     items,
     filtros,

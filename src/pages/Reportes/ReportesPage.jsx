@@ -3,7 +3,7 @@ import ReportesKpis from "./ReportesKpis";
 import ReportesRendimiento from "./ReportesRendimiento";
 
 export default function ReportesPage() {
-  const { loading, kpis, items, filtros, actualizarFiltros, generarReporte } = useReportes();
+  const { loading, refreshing, kpis, items, filtros, actualizarFiltros, generarReporte } = useReportes();
 
   return (
     <div className="p-4">
@@ -41,26 +41,18 @@ export default function ReportesPage() {
           <div className="flex items-end">
             <button
               onClick={generarReporte}
-              disabled={loading}
+              disabled={loading || refreshing}
               className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Generando...
-                </>
-              ) : (
-                <>
-                  <i className="bi bi-graph-up"></i>
-                  Generar reporte
-                </>
-              )}
+              {loading && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
+              {!loading && <i className="bi bi-graph-up"></i>}
+              <span>{loading ? "Generando..." : "Generar reporte"}</span>
             </button>
           </div>
         </div>
       </div>
 
-      <ReportesKpis reporte={kpis} />
+      <ReportesKpis reporte={kpis} loading={loading} />
       <ReportesRendimiento items={items} loading={loading} />
     </div>
   );

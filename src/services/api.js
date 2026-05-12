@@ -45,8 +45,6 @@ export async function apiFetch(path, options = {}) {
   const token = getAccessToken();
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
-  } else {
-    console.log("⚠️ No hay token disponible para:", path);
   }
 
   const xsrf = getCookie("XSRF-TOKEN");
@@ -74,4 +72,45 @@ export async function csrfCookie() {
     credentials: "include",
   });
   return response;
+}
+
+export function uploadWithProgress(path, file, { onUploadProgress, onProcessing } = {}) {
+  return new Promise((resolve, reject) => {
+    const token = getAccessToken();
+    const xsrf = getCookie("XSRF-TOKEN");
+
+    const xhr = new XMLHttpRequest();
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const pct = Math.round((e.loaded / e.total) * 100);
+        onUploadProgress?.(pct);
+        if (pct === 100) onProcessing?.();
+      }
+    };
+
+    xhr.onload = () => {
+      let data;
+      try { data = JSON.parse(xhr.responseText); } catch { data = { message: "Respuesta inválida del servidor" }; }
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(data);
+      } else {
+        reject({ status: xhr.status, data });
+      }
+    };
+
+    xhr.onerror = () => reject({ status: 0, data: { message: "Error de conexión" } });
+    xhr.ontimeout = () => reject({ status: 0, data: { message: "Tiempo de espera agotado" } });
+
+    const p = path.startsWith("/") ? path : `/${path}`;
+    xhr.open("POST", `${API_BASE_URL}/api${p}`);
+    xhr.withCredentials = true;
+    xhr.setRequestHeader("Accept", "application/json");
+    if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+    if (xsrf) xhr.setRequestHeader("X-XSRF-TOKEN", xsrf);
+
+    const formData = new FormData();
+    formData.append("file", file);
+    xhr.send(formData);
+  });
 }

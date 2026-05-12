@@ -1,25 +1,15 @@
 import { apiFetch, csrfCookie } from "./api";
 import { USER_KEY, TOKEN_KEY } from "../config/config";
+import { clearAllPageCache } from "../utils/pageCache";
 
-export async function validarCorreo(email) {
+export async function login(email, password) {
   await csrfCookie();
-  const res = await apiFetch("/auth/iniciar", {
+  const res = await apiFetch("/auth/login", {
     method: "POST",
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ email, password }),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.message || "El correo no está registrado.");
-  return { sessionToken: data.session_token };
-}
-
-export async function validarPassword(sessionToken, password) {
-  await csrfCookie();
-  const res = await apiFetch("/auth/verificar", {
-    method: "POST",
-    body: JSON.stringify({ session_token: sessionToken, password }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || "Contraseña incorrecta.");
+  if (!res.ok) throw new Error(data.message || "Credenciales inválidas.");
   const userData = data.usuario || data.user;
   if (!userData) throw new Error("Error al obtener datos del usuario.");
   return { token: data.access_token, usuario: userData };
@@ -44,7 +34,6 @@ export async function cerrarSesionBackend() {
   }
 }
 
-// Funciones de localStorage (igual que en vanilla JS)
 export function getUser() {
   const raw = localStorage.getItem(USER_KEY);
   if (!raw || raw === "undefined" || raw === "null") return null;
@@ -57,9 +46,7 @@ export function getUser() {
 }
 
 export function setUser(user) {
-  // Guardar usuario completo
   localStorage.setItem(USER_KEY, JSON.stringify(user));
-  // Si tiene token, guardarlo también por separado para fácil acceso
   if (user.access_token) {
     localStorage.setItem(TOKEN_KEY, user.access_token);
   }
@@ -68,6 +55,7 @@ export function setUser(user) {
 export function clearAuth() {
   localStorage.removeItem(USER_KEY);
   localStorage.removeItem(TOKEN_KEY);
+  clearAllPageCache();
 }
 
 export function hasRole(...roles) {

@@ -1,4 +1,4 @@
-import { apiFetch, csrfCookie } from "./api";
+import { apiFetch, csrfCookie, uploadWithProgress } from "./api";
 
 export async function listarProveedores({ search = "", activos = "1", page = 1, perPage = 10 } = {}) {
   const qs = new URLSearchParams();
@@ -59,6 +59,10 @@ export async function eliminarProveedor(id) {
   const result = await res.json();
   if (!res.ok) throw new Error(result?.message || "No se pudo eliminar");
   return result;
+}
+
+export function importarProveedores(file, { onUploadProgress, onProcessing } = {}) {
+  return uploadWithProgress("/proveedores/importar", file, { onUploadProgress, onProcessing });
 }
 
 export async function toggleProveedor(id) {

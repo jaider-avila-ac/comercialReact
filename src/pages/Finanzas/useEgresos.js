@@ -70,6 +70,8 @@ export function useEgresos() {
           proveedor_nombre: item.proveedor_nombre,
           created_at: item.created_at,
           updated_at: item.updated_at,
+          usuario: item.usuario,
+          anulado_por: item.anulado_por,
         };
       });
 

@@ -17,7 +17,7 @@ const formatDate = (isoDate) => {
   return `${day}/${month}/${year}`;
 };
 
-export function useIngresos() {
+export function useIngresos(initialTipo = "") {
   const [ingresos, setIngresos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
@@ -29,7 +29,7 @@ export function useIngresos() {
   });
   const [filtros, setFiltros] = useState({
     search: "",
-    tipo: "",
+    tipo: initialTipo,
     estado: "ACTIVO",
     desde: "",
     hasta: "",
@@ -65,6 +65,7 @@ export function useIngresos() {
           fecha_formatted: formatDate(item.fecha),
           tipo: item.tipo,
           tipo_label: item.tipo_label,
+          descripcion: item.descripcion || "",
           monto: parseFloat(item.monto) || 0,
           monto_formatted: formatMoney(item.monto),
           forma_pago: item.forma_pago || "—",
@@ -72,6 +73,8 @@ export function useIngresos() {
           notas: item.notas || "—",
           cliente_nombre: item.cliente_nombre,
           estado: item.estado || "ACTIVO",
+          usuario: item.usuario,
+          anulado_por: item.anulado_por,
         };
       });
 

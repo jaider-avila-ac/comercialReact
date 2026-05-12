@@ -86,7 +86,9 @@ export async function getVentasRapidas({ desde, hasta } = {}) {
     notas: item.descripcion || item.notas,
     item_nombre: item.item?.nombre || "Producto",
     cantidad: item.cantidad,
-    valor_unitario: item.precio_unitario
+    valor_unitario: item.precio_unitario,
+    usuario: item.usuario,
+    anulado_por: item.anulado_por,
   }));
   
   return rows;

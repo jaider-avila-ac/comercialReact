@@ -70,7 +70,6 @@ export default function AuditoriaPage() {
     { key: "fecha", label: "Fecha/Hora", sortable: true },
     { key: "usuario", label: "Usuario", sortable: true },
     { key: "accion", label: "Acción", sortable: true, align: "center" },
-    { key: "entidad", label: "Entidad", sortable: true },
     { key: "descripcion", label: "Descripción" },
     { key: "ip", label: "IP", sortable: true },
   ];
@@ -100,7 +99,7 @@ export default function AuditoriaPage() {
       </span>
     ),
     descripcion: (
-      <span className="text-sm text-gray-500 max-w-[250px] block truncate" title={item.descripcion}>
+      <span className="text-sm text-gray-500 max-w-62.5 block truncate" title={item.descripcion}>
         {item.descripcion || "—"}
       </span>
     ),
@@ -134,7 +133,7 @@ export default function AuditoriaPage() {
       ),
       browser: <span className="text-sm text-gray-600">{browser}</span>,
       user_agent: (
-        <span className="text-xs text-gray-400 max-w-[280px] block truncate" title={item.user_agent}>
+        <span className="text-xs text-gray-400 max-w-70 block truncate" title={item.user_agent}>
           {item.user_agent || "—"}
         </span>
       ),
@@ -173,7 +172,7 @@ export default function AuditoriaPage() {
               value={minutos}
               onChange={(e) => setMinutos(e.target.value)}
               options={MINUTOS_OPTIONS}
-              className="min-w-[180px]"
+              className="min-w-45"
             />
             <Button
               icon={RefreshCw}

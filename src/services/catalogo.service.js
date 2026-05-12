@@ -70,6 +70,51 @@ export async function eliminarItem(id) {
   return data;
 }
 
+export async function registrarMovimientoItem(id, data, archivo = null) {
+  await csrfCookie();
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  const fd = new FormData();
+  Object.entries(data).forEach(([key, value]) => {
+    if (value !== null && value !== undefined && value !== "") {
+      fd.append(key, value);
+    }
+  });
+  if (archivo) fd.append("archivo", archivo);
+
+  const res = await fetch(`${API_BASE_URL}/api/items/${id}/movimiento`, {
+    method: "POST",
+    body: fd,
+    headers: {
+      Accept: "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    credentials: "include",
+  });
+
+  const result = await res.json();
+  if (!res.ok) throw new Error(result?.message || "Error al registrar movimiento");
+  return result;
+}
+
+export async function listarComprasItem(itemId) {
+  const res = await apiFetch(`/items/${itemId}/compras`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.message || "Error al listar compras del item");
+  return data;
+}
+
+export async function editarCompraItem(itemId, compraId, payload) {
+  await csrfCookie();
+  const res = await apiFetch(`/items/${itemId}/compras/${compraId}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.message || "Error al editar compra");
+  return data;
+}
+
 export async function ajustarInventario(payload) {
   await csrfCookie();
   const res = await apiFetch("/stock/ajustar", {

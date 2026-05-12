@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 
-// Estilos para cards de fondo sólido (Finanzas)
 const cardColorStyles = {
   blue:    { bg: "bg-blue-600 hover:bg-blue-700",       sub: "text-blue-100" },
   green:   { bg: "bg-emerald-600 hover:bg-emerald-700", sub: "text-emerald-100" },
@@ -13,7 +12,6 @@ const cardColorStyles = {
   indigo:  { bg: "bg-indigo-600 hover:bg-indigo-700",   sub: "text-indigo-100" },
 };
 
-// Colores del badge de icono para cards blancas (Dashboard)
 const iconBadgeStyles = {
   blue:    "bg-blue-500 text-white",
   indigo:  "bg-indigo-500 text-white",
@@ -27,9 +25,10 @@ const iconBadgeStyles = {
   gray:    "bg-gray-400 text-white",
 };
 
-export default function KpiCard({ title, value, subtitle, iconClass, color = "blue", iconColor, to, large = false }) {
+export default function KpiCard({ title, value, subtitle, iconClass, color = "blue", iconColor, to, large = false, loading = false }) {
   const isWhite = color === "white";
   const iconSize = large ? "w-12 h-12 text-2xl" : "w-11 h-11 text-xl";
+  const skeletonH = large ? "h-9" : "h-7";
 
   let card;
 
@@ -45,7 +44,10 @@ export default function KpiCard({ title, value, subtitle, iconClass, color = "bl
           )}
           <div>
             <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{title}</div>
-            <div className={`font-bold text-gray-800 leading-tight ${large ? "text-3xl" : "text-2xl"}`}>{value ?? "—"}</div>
+            {loading
+              ? <div className={`${skeletonH} w-28 bg-gray-200 rounded-lg animate-pulse mt-1`} />
+              : <div className={`font-bold text-gray-800 leading-tight ${large ? "text-3xl" : "text-2xl"}`}>{value ?? "—"}</div>
+            }
             {subtitle && <div className="text-xs text-gray-400 mt-0.5">{subtitle}</div>}
           </div>
         </div>
@@ -63,7 +65,10 @@ export default function KpiCard({ title, value, subtitle, iconClass, color = "bl
           )}
           <div className={!iconClass ? "w-full" : ""}>
             <div className={`text-xs font-semibold ${styles.sub} uppercase tracking-wide`}>{title}</div>
-            <div className={`font-bold leading-tight text-white ${large ? "text-3xl" : "text-2xl"}`}>{value ?? "—"}</div>
+            {loading
+              ? <div className={`${skeletonH} w-28 bg-white/30 rounded-lg animate-pulse mt-1`} />
+              : <div className={`font-bold leading-tight text-white ${large ? "text-3xl" : "text-2xl"}`}>{value ?? "—"}</div>
+            }
             {subtitle && <div className={`text-xs ${styles.sub} mt-0.5`}>{subtitle}</div>}
           </div>
         </div>

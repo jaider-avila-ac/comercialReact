@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useDashboard } from "./useDashboard";
+import { useAuth } from "../../context/AuthContext";
 import { formatMoney, formatNumber, FORMAS_PAGO } from "../../services/dashboard.service";
 import KpiCard from "../../components/ui/KpiCard";
 import DataTable from "../../components/ui/DataTable";
@@ -17,13 +18,13 @@ const EstadoBadge = ({ estado }) => {
 };
 
 export default function DashboardPage() {
- 
   const { dashboardData, loading } = useDashboard();
+  const { perfil } = useAuth();
+  const isAdmin = perfil?.rol === "SUPER_ADMIN" || perfil?.rol === "EMPRESA_ADMIN";
+
   const { resumen, ultimasFacturas, ultimosPagos } = dashboardData;
 
-
-
-  const facturasPendientes = ultimasFacturas.filter(f => (f.saldo || 0) > 0);
+  const facturasPendientes = ultimasFacturas.filter(f => f.estado !== 'ANULADA' && (f.saldo || 0) > 0);
   const totalSaldoPendiente = facturasPendientes.reduce((sum, f) => sum + (f.saldo || 0), 0);
 
   const facturasColumns = [
@@ -36,15 +37,17 @@ export default function DashboardPage() {
 
   const facturasRows = ultimasFacturas.map(f => ({
     id: f.id,
-    numero: f.numero,
+    numero: f.estado === "BORRADOR"
+      ? <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Borrador</span>
+      : <span className="font-mono font-medium text-blue-600">{f.numero || `#${f.id}`}</span>,
     cliente_nombre: f.cliente?.nombre_razon_social || "—",
     estado: <EstadoBadge estado={f.estado} />,
     total: formatMoney(f.total),
-    saldo: f.saldo > 0 ? 
-      <span className="text-red-600 font-semibold">{formatMoney(f.saldo)}</span> : 
-      <span className="text-green-600 font-semibold flex items-center justify-end gap-1">
-        <i className="bi bi-check2-circle"></i> Pagada
-      </span>,
+    saldo: (f.saldo || 0) > 0
+      ? <span className="text-red-600 font-semibold">{formatMoney(f.saldo)}</span>
+      : <span className="text-green-600 font-semibold flex items-center justify-end gap-1">
+          <i className="bi bi-check2-circle"></i> Pagada
+        </span>,
   }));
 
   const pendientesColumns = [
@@ -56,7 +59,9 @@ export default function DashboardPage() {
 
   const pendientesRows = facturasPendientes.map(f => ({
     id: f.id,
-    numero: f.numero,
+    numero: f.estado === "BORRADOR"
+      ? <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Borrador</span>
+      : <span className="font-mono font-medium text-blue-600">{f.numero || `#${f.id}`}</span>,
     cliente_nombre: f.cliente?.nombre_razon_social || "—",
     total: formatMoney(f.total),
     saldo: <span className="text-red-600 font-semibold">{formatMoney(f.saldo)}</span>,
@@ -79,12 +84,10 @@ export default function DashboardPage() {
     monto: <span className="text-green-600 font-semibold">{formatMoney(p.monto || 0)}</span>,
   }));
 
-
-
   return (
     <div className="p-3 lg:p-4" style={{ maxWidth: '1400px' }}>
-      
-      {/* Action Buttons — alineados a la derecha */}
+
+      {/* Action Buttons */}
       <div className="flex justify-end items-center mb-3 gap-2 flex-wrap">
         <Link to="/venta-rapida" className="flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-lg bg-amber-400 hover:bg-amber-500 text-gray-900 transition-all shadow-sm min-w-25">
           <i className="bi bi-lightning-charge-fill text-xl"></i>
@@ -100,22 +103,26 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      {/* KPIs */}
+      {/* KPIs básicos */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
-        <KpiCard title="Clientes"      value={formatNumber(resumen.total_clientes)}       iconClass="bi bi-people-fill"           color="white" iconColor="blue"    to="/clientes" />
-        <KpiCard title="Catálogo"      value={formatNumber(resumen.total_items)}           iconClass="bi bi-box-seam-fill"          color="white" iconColor="indigo"  to="/catalogo" />
-        <KpiCard title="Cotizaciones"  value={formatNumber(resumen.cotizaciones_activas)}  iconClass="bi bi-clipboard2-check-fill"  color="white" iconColor="teal"    to="/cotizaciones" />
-        <KpiCard title="Facturas"      value={formatNumber((resumen.facturas_borrador || 0) + (resumen.facturas_emitidas || 0))} iconClass="bi bi-file-earmark-text-fill" color="white" iconColor="amber" to="/facturas" />
+        <KpiCard title="Clientes"     value={formatNumber(resumen.total_clientes)}      iconClass="bi bi-people-fill"           color="white" iconColor="blue"   to="/clientes"     loading={loading} />
+        <KpiCard title="Catálogo"     value={formatNumber(resumen.total_items)}          iconClass="bi bi-box-seam-fill"          color="white" iconColor="indigo" to="/catalogo"     loading={loading} />
+        <KpiCard title="Cotizaciones" value={formatNumber(resumen.cotizaciones_activas)} iconClass="bi bi-clipboard2-check-fill"  color="white" iconColor="teal"   to="/cotizaciones" loading={loading} />
+        <KpiCard title="Facturas"     value={formatNumber((resumen.facturas_borrador || 0) + (resumen.facturas_emitidas || 0))} iconClass="bi bi-file-earmark-text-fill" color="white" iconColor="amber" to="/facturas" loading={loading} />
       </div>
 
-      {/* KPIs financieros grandes */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
-        <KpiCard title="Total en caja" value={formatMoney(resumen.total_en_caja)}     iconClass="bi bi-check-circle-fill"       color="white" iconColor="emerald" to="/finanzas" large />
-        <KpiCard title="Saldo pendiente" value={formatMoney(resumen.saldo_pendiente)}   iconClass="bi bi-exclamation-circle-fill" color="white" iconColor="red"     to="/finanzas" large />
+      {/* KPIs financieros */}
+      <div className={`grid grid-cols-1 gap-2 mb-3 ${isAdmin ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
+        {isAdmin && (
+          <KpiCard title="Total en caja"   value={formatMoney(resumen.balance_real)}        iconClass="bi bi-check-circle-fill"      color="white" iconColor="emerald" to="/finanzas"           large loading={loading} />
+        )}
+        <KpiCard   title="Saldo pendiente" value={formatMoney(resumen.saldo_pendiente)}      iconClass="bi bi-exclamation-circle-fill" color="white" iconColor="red"     to="/finanzas/pendientes" large loading={loading} />
+        <KpiCard   title="Ingresos hoy"    value={formatMoney(resumen.ingresos_hoy ?? 0)}    iconClass="bi bi-graph-up-arrow"          color="white" iconColor="blue"                             large loading={loading} />
       </div>
 
       {/* Paneles de detalle */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+
         {/* Últimas facturas */}
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
           <div className="px-4 py-2 border-b bg-blue-50 border-blue-200">
@@ -130,10 +137,11 @@ export default function DashboardPage() {
           </div>
           <DataTable
             columns={facturasColumns}
-            rows={facturasRows}
+            rows={facturasRows.slice(0, 5)}
             loading={loading}
             empty="Sin facturas aún"
-            defaultSort={{ key: "numero", dir: "desc" }}
+            pageSize={5}
+            hidePagination={true}
           />
         </div>
 
@@ -144,17 +152,18 @@ export default function DashboardPage() {
               <span className="text-xs font-bold uppercase tracking-wide text-red-800 flex items-center gap-1">
                 <i className="bi bi-hourglass-split"></i> Por cobrar
               </span>
-              <Link to="/finanzas" className="text-xs font-medium text-red-600 hover:bg-red-100 px-2 py-1 rounded transition-colors">
-                Ir a cobros <i className="bi bi-arrow-right ml-1"></i>
+              <Link to="/finanzas/pendientes" className="text-xs font-medium text-red-600 hover:bg-red-100 px-2 py-1 rounded transition-colors">
+                Ver todos <i className="bi bi-arrow-right ml-1"></i>
               </Link>
             </div>
           </div>
           <DataTable
             columns={pendientesColumns}
-            rows={pendientesRows}
+            rows={pendientesRows.slice(0, 5)}
             loading={loading}
             empty="Sin facturas pendientes"
-            defaultSort={{ key: "numero", dir: "asc" }}
+            pageSize={5}
+            hidePagination={true}
           />
           {pendientesRows.length > 0 && (
             <div className="bg-gray-50 px-3 py-2 border-t border-gray-100 text-xs text-gray-600">
@@ -171,17 +180,24 @@ export default function DashboardPage() {
               <span className="text-xs font-bold uppercase tracking-wide text-green-800 flex items-center gap-1">
                 <i className="bi bi-receipt"></i> Últimos pagos recibidos
               </span>
-              <Link to="/finanzas" className="text-xs font-medium text-green-600 hover:bg-green-100 px-2 py-1 rounded transition-colors">
-                Ver historial <i className="bi bi-arrow-right ml-1"></i>
-              </Link>
+              {isAdmin && (
+                <Link
+                  to="/finanzas/ingresos"
+                  state={{ tipo: "PAGO_FACTURA" }}
+                  className="text-xs font-medium text-green-600 hover:bg-green-100 px-2 py-1 rounded transition-colors"
+                >
+                  Ver historial <i className="bi bi-arrow-right ml-1"></i>
+                </Link>
+              )}
             </div>
           </div>
           <DataTable
             columns={pagosColumns}
-            rows={pagosRows}
+            rows={pagosRows.slice(0, 5)}
             loading={loading}
             empty="Sin pagos registrados aún"
-            defaultSort={{ key: "fecha", dir: "desc" }}
+            pageSize={5}
+            hidePagination={true}
           />
         </div>
       </div>

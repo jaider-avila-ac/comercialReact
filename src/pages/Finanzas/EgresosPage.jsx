@@ -52,10 +52,17 @@ export default function EgresosPage() {
     }
   };
 
+  const nombreUsuario = (u) => {
+    if (!u) return null;
+    return u.nombre_completo || [u.nombres, u.apellidos].filter(Boolean).join(" ").trim() || null;
+  };
+
   const columns = [
     { key: "recibo", label: "Recibo", sortable: true },
     { key: "fecha", label: "Fecha", sortable: true },
     { key: "descripcion", label: "Descripción", sortable: true },
+    { key: "estado", label: "Estado" },
+    { key: "vendedor", label: "Vendedor", sortable: false },
     { key: "archivo", label: "Archivo", align: "center" },
     { key: "notas", label: "Notas" },
     { key: "tipo_label", label: "Tipo", sortable: true, align: "center" },
@@ -95,29 +102,36 @@ export default function EgresosPage() {
     );
   };
 
-  const rows = egresos.map(e => ({
+  const rows = egresos.map(e => {
+    const anulador = nombreUsuario(e.anulado_por);
+    const creador  = nombreUsuario(e.usuario);
+    return {
     id: e.id,
     recibo: <span className="font-semibold text-gray-800">{e.recibo}</span>,
     fecha: <span className="text-gray-600 text-sm whitespace-nowrap">{e.fecha}</span>,
     descripcion: (
       <div>
         <div className="font-medium text-gray-800">{e.descripcion}</div>
-        <div className="mt-1">
-          {e.estado === "ANULADO" ? (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 border border-red-200">
-              ANULADO
-            </span>
-          ) : (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
-              ACTIVO
-            </span>
-          )}
-        </div>
         {e.proveedor_nombre && (
-          <div className="text-xs text-gray-500 mt-1">{e.proveedor_nombre}</div>
+          <div className="text-xs text-gray-500 mt-0.5">{e.proveedor_nombre}</div>
         )}
       </div>
     ),
+    estado: e.estado === "ANULADO" ? (
+      <div className="flex flex-col gap-0.5">
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 border border-red-200">
+          ANULADO
+        </span>
+        {anulador && <span className="text-xs text-gray-400">por: {anulador}</span>}
+      </div>
+    ) : (
+      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
+        ACTIVO
+      </span>
+    ),
+    vendedor: creador
+      ? <span className="text-xs text-gray-500 leading-tight">{creador}</span>
+      : null,
     archivo: e.archivo_url ? (
       <a
         href={e.archivo_url}
@@ -127,18 +141,14 @@ export default function EgresosPage() {
         title={e.archivo_nombre}
       >
         <i className="bi bi-paperclip"></i>
-        <span className="truncate max-w-[100px]">{e.archivo_nombre || "Ver archivo"}</span>
+        <span className="truncate max-w-25">{e.archivo_nombre || "Ver archivo"}</span>
       </a>
-    ) : (
-      <span className="text-gray-400 text-sm flex justify-center">—</span>
-    ),
-    notas: e.notas !== "—" ? (
-      <span className="text-gray-500 text-sm truncate max-w-[150px] block" title={e.notas}>
+    ) : null,
+    notas: e.notas && e.notas !== "—" ? (
+      <span className="text-gray-500 text-sm truncate max-w-37.5 block" title={e.notas}>
         {e.notas}
       </span>
-    ) : (
-      <span className="text-gray-400 text-sm">—</span>
-    ),
+    ) : null,
     tipo_label: (
       <span className="inline-flex items-center gap-1 text-sm text-gray-600 justify-center">
         {e.tipo_icono && <i className={`bi ${e.tipo_icono}`}></i>}
@@ -150,7 +160,7 @@ export default function EgresosPage() {
     ) : (
       <span className="text-red-600 font-semibold">{e.monto_formatted}</span>
     ),
-  }));
+  };});
 
   const footerTotales = (
     <div className="border-t border-gray-200 bg-gray-50 px-4 py-2">
@@ -160,7 +170,7 @@ export default function EgresosPage() {
         </div>
         <div className="flex gap-2 items-center">
           <span className="text-gray-500">Total egresos →</span>
-          <span className="text-red-600 font-semibold min-w-[130px] text-right">
+          <span className="text-red-600 font-semibold min-w-32.5 text-right">
             {totalFormatted}
           </span>
         </div>

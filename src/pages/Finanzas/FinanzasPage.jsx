@@ -5,7 +5,7 @@ import { Input } from "../../components/ui/Input";
 import { useFinanzas } from "./useFinanzas";
 
 export default function FinanzasPage() {
-  const { kpis, loading, filtros, actualizarFiltros, limpiarFiltros, recargar, formatMoney } = useFinanzas();
+  const { kpis, loading, refreshing, filtros, actualizarFiltros, limpiarFiltros, recargar, formatMoney } = useFinanzas();
 
   const handleFiltroChange = (campo, valor) => {
     actualizarFiltros({ [campo]: valor });
@@ -28,12 +28,12 @@ export default function FinanzasPage() {
           </h1>
           <p className="text-sm text-gray-500">Cobros, ingresos, egresos y balance de caja</p>
         </div>
-        <Button text="Actualizar" icon={RefreshCw} variant="outline" onClick={recargar} disabled={loading} />
+        <Button text="Actualizar" icon={RefreshCw} variant="outline" onClick={recargar} disabled={loading || refreshing} />
       </div>
 
       {/* Filtros por fecha */}
       <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
-        <div className="flex flex-wrap gap-3 items-end">
+        <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
           <Input
             label="Desde"
             type="date"
@@ -48,7 +48,7 @@ export default function FinanzasPage() {
           />
           <Button text="Limpiar" icon={X} variant="outline" onClick={handleLimpiar} />
           {loading && (
-            <div className="flex items-center gap-2 text-sm text-gray-500 pb-1">
+            <div className="flex items-center gap-2 text-sm text-gray-500 sm:pb-1">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
               Actualizando...
             </div>
@@ -63,7 +63,7 @@ export default function FinanzasPage() {
             <ArrowUpCircle className="w-10 h-10 text-emerald-200 shrink-0" />
             <div>
               <div className="text-xs font-semibold text-emerald-100 uppercase tracking-wide">Total ingresos</div>
-              <div className="text-3xl font-bold leading-tight">{formatMoney(kpis.total_en_caja)}</div>
+              {loading ? <div className="h-9 w-36 bg-white/30 rounded-lg animate-pulse mt-1" /> : <div className="text-3xl font-bold leading-tight">{formatMoney(kpis.total_en_caja)}</div>}
               <div className="text-xs text-emerald-100 mt-0.5">Facturas + Mostrador + Manuales</div>
             </div>
           </div>
@@ -74,7 +74,7 @@ export default function FinanzasPage() {
             <ArrowDownCircle className="w-10 h-10 text-red-200 shrink-0" />
             <div>
               <div className="text-xs font-semibold text-red-100 uppercase tracking-wide">Total egresos</div>
-              <div className="text-3xl font-bold leading-tight">{formatMoney(kpis.total_egresos)}</div>
+              {loading ? <div className="h-9 w-36 bg-white/30 rounded-lg animate-pulse mt-1" /> : <div className="text-3xl font-bold leading-tight">{formatMoney(kpis.total_egresos)}</div>}
               <div className="text-xs text-red-100 mt-0.5">Compras + Gastos manuales</div>
             </div>
           </div>
@@ -85,7 +85,7 @@ export default function FinanzasPage() {
             <Wallet className="w-10 h-10 opacity-60 shrink-0" />
             <div>
               <div className="text-xs font-semibold opacity-80 uppercase tracking-wide">Total en caja</div>
-              <div className="text-3xl font-bold leading-tight">{formatMoney(kpis.balance_real)}</div>
+              {loading ? <div className="h-9 w-36 bg-white/30 rounded-lg animate-pulse mt-1" /> : <div className="text-3xl font-bold leading-tight">{formatMoney(kpis.balance_real)}</div>}
               <div className="text-xs opacity-70 mt-0.5">Ingresos − Egresos</div>
             </div>
           </div>
@@ -107,25 +107,25 @@ export default function FinanzasPage() {
                 <div className="text-sm font-medium text-gray-800">Pagos de facturas</div>
                 <div className="text-xs text-gray-400">Cobros aplicados a facturas</div>
               </div>
-              <div className="text-sm font-bold text-emerald-600">{formatMoney(kpis.ingresos_facturas)}</div>
+              <div className="text-sm font-bold text-emerald-600">{loading ? <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /> : formatMoney(kpis.ingresos_facturas)}</div>
             </div>
             <div className="flex justify-between items-center px-4 py-3">
               <div>
                 <div className="text-sm font-medium text-gray-800">Ventas mostrador</div>
                 <div className="text-xs text-gray-400">Ventas de contado directas</div>
               </div>
-              <div className="text-sm font-bold text-emerald-600">{formatMoney(kpis.ingresos_mostrador)}</div>
+              <div className="text-sm font-bold text-emerald-600">{loading ? <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /> : formatMoney(kpis.ingresos_mostrador)}</div>
             </div>
             <div className="flex justify-between items-center px-4 py-3">
               <div>
                 <div className="text-sm font-medium text-gray-800">Ingresos manuales</div>
                 <div className="text-xs text-gray-400">Entradas adicionales registradas</div>
               </div>
-              <div className="text-sm font-bold text-emerald-600">{formatMoney(kpis.ingresos_manuales)}</div>
+              <div className="text-sm font-bold text-emerald-600">{loading ? <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /> : formatMoney(kpis.ingresos_manuales)}</div>
             </div>
             <div className="flex justify-between items-center px-4 py-3 bg-emerald-50">
               <div className="text-sm font-bold text-gray-700">Total</div>
-              <div className="text-sm font-bold text-emerald-700">{formatMoney(kpis.total_en_caja)}</div>
+              <div className="text-sm font-bold text-emerald-700">{loading ? <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /> : formatMoney(kpis.total_en_caja)}</div>
             </div>
           </div>
         </div>
@@ -143,18 +143,18 @@ export default function FinanzasPage() {
                 <div className="text-sm font-medium text-gray-800">Egresos por compras</div>
                 <div className="text-xs text-gray-400">Pagos a proveedores registrados</div>
               </div>
-              <div className="text-sm font-bold text-red-600">{formatMoney(kpis.egresos_compras)}</div>
+              <div className="text-sm font-bold text-red-600">{loading ? <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /> : formatMoney(kpis.egresos_compras)}</div>
             </div>
             <div className="flex justify-between items-center px-4 py-3">
               <div>
                 <div className="text-sm font-medium text-gray-800">Egresos manuales</div>
                 <div className="text-xs text-gray-400">Gastos y salidas adicionales</div>
               </div>
-              <div className="text-sm font-bold text-red-600">{formatMoney(kpis.egresos_manuales)}</div>
+              <div className="text-sm font-bold text-red-600">{loading ? <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /> : formatMoney(kpis.egresos_manuales)}</div>
             </div>
             <div className="flex justify-between items-center px-4 py-3 bg-red-50">
               <div className="text-sm font-bold text-gray-700">Total</div>
-              <div className="text-sm font-bold text-red-700">{formatMoney(kpis.total_egresos)}</div>
+              <div className="text-sm font-bold text-red-700">{loading ? <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /> : formatMoney(kpis.total_egresos)}</div>
             </div>
           </div>
         </div>
@@ -172,7 +172,7 @@ export default function FinanzasPage() {
                 </div>
                 <div>
                   <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Saldo por cobrar</div>
-                  <div className="text-2xl font-bold text-amber-600">{formatMoney(kpis.saldo_pendiente)}</div>
+                  {loading ? <div className="h-8 w-32 bg-amber-100 rounded-lg animate-pulse mt-1" /> : <div className="text-2xl font-bold text-amber-600">{formatMoney(kpis.saldo_pendiente)}</div>}
                   <div className="text-xs text-gray-400 mt-0.5">Lo que me deben los clientes</div>
                 </div>
               </div>
@@ -186,18 +186,20 @@ export default function FinanzasPage() {
         </Link>
 
         {/* Cuentas por pagar */}
-        <div className="bg-white rounded-xl border border-orange-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center shrink-0">
-              <TrendingDown className="w-5 h-5 text-orange-600" />
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Cuentas por pagar</div>
-              <div className="text-2xl font-bold text-orange-600">{formatMoney(kpis.cuentas_por_pagar)}</div>
-              <div className="text-xs text-gray-400 mt-0.5">Lo que debo a proveedores</div>
+        <Link to="/compras" className="block">
+          <div className="bg-white rounded-xl border border-orange-200 p-4 hover:shadow-md transition-shadow cursor-pointer">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center shrink-0">
+                <TrendingDown className="w-5 h-5 text-orange-600" />
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Cuentas por pagar</div>
+                {loading ? <div className="h-8 w-32 bg-orange-100 rounded-lg animate-pulse mt-1" /> : <div className="text-2xl font-bold text-orange-600">{formatMoney(kpis.cuentas_por_pagar)}</div>}
+                <div className="text-xs text-gray-400 mt-0.5">Lo que debo a proveedores</div>
+              </div>
             </div>
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* Accesos rápidos */}

@@ -15,11 +15,15 @@ const ROUTE_TITLES = {
   "/cotizaciones/nueva": "Cotizaciones / Nueva",
   "/cotizaciones/editar": "Cotizaciones / Editar",
   "/cotizaciones/ver": "Cotizaciones / Ver",
+  "/cotizaciones/nueva-libre": "Cotizaciones / Nueva",
+  "/cotizaciones/editar-libre": "Cotizaciones / Editar",
   // Facturas
   "/facturas": "Facturas",
   "/facturas/nueva": "Facturas / Nueva",
   "/facturas/editar": "Facturas / Editar",
   "/facturas/ver": "Facturas / Ver",
+  "/facturas/nueva-libre": "Facturas / Nueva",
+  "/facturas/editar-libre": "Facturas / Editar",
   // Proveedores
   "/proveedores": "Proveedores",
   "/proveedores/nuevo": "Proveedores / Nuevo",
@@ -32,7 +36,7 @@ const ROUTE_TITLES = {
   "/finanzas": "Finanzas",
   "/finanzas/ingresos": "Finanzas / Ingresos",
   "/finanzas/egresos": "Finanzas / Egresos",
-  "/finanzas/pendientes": "Finanzas / Pendientes",
+  "/finanzas/pendientes": "Saldos Pendientes",
   "/finanzas/cobro-rapido": "Finanzas / Cobro Rápido",
   // Compras e Inventario
   "/compras": "Compras",
